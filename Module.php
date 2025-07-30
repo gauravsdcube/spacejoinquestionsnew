@@ -2,18 +2,18 @@
 
 namespace humhub\modules\spaceJoinQuestions;
 
+use humhub\modules\content\components\ContentContainerActiveRecord;
+use humhub\modules\content\components\ContentContainerModule;
+use humhub\modules\space\models\Space;
 use Yii;
 use yii\helpers\Url;
-use humhub\modules\content\components\ContentContainerModule;
-use humhub\modules\content\components\ContentContainerActiveRecord;
-use humhub\modules\space\models\Space;
 
 /**
  * Space Join Questions Module
- * 
+ *
  * Allows space administrators to create custom questions for membership requests
  * with proper approval workflow and notifications.
- * 
+ *
  * @author D Cube Consulting Ltd <info@dcubeconsulting.co.uk>
  * @version 2.0.0
  * @since 1.0.0
@@ -106,7 +106,7 @@ class Module extends ContentContainerModule
         if ($container instanceof Space) {
             return Yii::t('SpaceJoinQuestionsModule.base', 'Configure custom questions for membership requests in this space.');
         }
-        
+
         return $this->getDescription();
     }
 
@@ -118,7 +118,7 @@ class Module extends ContentContainerModule
         if ($container instanceof Space) {
             return $container->createUrl('/space-join-questions/admin/index');
         }
-        
+
         return null;
     }
 
@@ -148,15 +148,19 @@ class Module extends ContentContainerModule
     public function disable()
     {
         // Clean up module data
-        foreach (models\SpaceJoinQuestion::find()->all() as $question) {
+        foreach (models\EmailTemplate::find()->each() as $template) {
+            $template->delete();
+        }
+
+        foreach (models\SpaceJoinQuestion::find()->each() as $question) {
             $question->delete();
         }
-        
-        foreach (models\SpaceJoinAnswer::find()->all() as $answer) {
+
+        foreach (models\SpaceJoinAnswer::find()->each() as $answer) {
             $answer->delete();
         }
-        
-        foreach (models\DeclineReason::find()->all() as $reason) {
+
+        foreach (models\DeclineReason::find()->each() as $reason) {
             $reason->delete();
         }
 
@@ -173,7 +177,7 @@ class Module extends ContentContainerModule
 
     /**
      * Check if space has custom questions configured
-     * 
+     *
      * @param Space $space
      * @return bool
      */
@@ -186,7 +190,7 @@ class Module extends ContentContainerModule
 
     /**
      * Get questions count for space
-     * 
+     *
      * @param Space $space
      * @return int
      */
@@ -196,4 +200,4 @@ class Module extends ContentContainerModule
             ->where(['space_id' => $space->id])
             ->count();
     }
-} 
+}
