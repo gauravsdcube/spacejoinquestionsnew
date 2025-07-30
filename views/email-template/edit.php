@@ -1,9 +1,9 @@
 <?php
 
-use yii\helpers\Html;
-use yii\widgets\ActiveForm;
+use humhub\libs\Html;
 use humhub\modules\content\widgets\richtext\RichTextField;
 use humhub\modules\ui\view\components\View;
+use yii\widgets\ActiveForm;
 
 /* @var $this View */
 /* @var $template \humhub\modules\spaceJoinQuestions\models\EmailTemplate */
@@ -21,10 +21,10 @@ $this->params['breadcrumbs'][] = $this->title;
         <h4><?= Html::encode($this->title) ?></h4>
         <p class="help-block"><?= Yii::t('SpaceJoinQuestionsModule.base', 'Template Type: {type}', ['type' => $template->getTemplateTypeLabel()]) ?></p>
     </div>
-    
+
     <div class="panel-body">
         <?php $form = ActiveForm::begin(['id' => 'email-template-form-' . $template->template_type]); ?>
-        
+
         <div class="row">
             <div class="col-md-12">
                 <?= $form->field($template, 'subject')->textInput(['maxlength' => 255]) ?>
@@ -35,7 +35,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="col-md-12">
                 <h5><?= Yii::t('SpaceJoinQuestionsModule.base', 'Email Header') ?></h5>
                 <p class="help-block"><?= Yii::t('SpaceJoinQuestionsModule.base', 'Add a header with your logo, company name, or a colored banner. You can use plain text or rich text formatting.') ?></p>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <?= $form->field($template, 'header')->widget(RichTextField::class, [
@@ -54,7 +54,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     'style' => 'height: 40px;',
                                     'title' => Yii::t('SpaceJoinQuestionsModule.base', 'Choose header background color'),
                                 ])->label(Yii::t('SpaceJoinQuestionsModule.base', 'Header Background Color')) ?>
-                                
+
                                 <?= $form->field($template, 'header_bg_color')->textInput([
                                     'class' => 'form-control hex-input',
                                     'placeholder' => '#f8f9fa',
@@ -67,7 +67,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     'style' => 'height: 40px;',
                                     'title' => Yii::t('SpaceJoinQuestionsModule.base', 'Choose header font color'),
                                 ])->label(Yii::t('SpaceJoinQuestionsModule.base', 'Header Font Color')) ?>
-                                
+
                                 <?= $form->field($template, 'header_font_color')->textInput([
                                     'class' => 'form-control hex-input',
                                     'placeholder' => '#495057',
@@ -84,7 +84,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="col-md-12">
                 <h5><?= Yii::t('SpaceJoinQuestionsModule.base', 'Email Body') ?></h5>
                 <p class="help-block"><?= Yii::t('SpaceJoinQuestionsModule.base', 'This is the main content of your email. Use the rich text editor to format text, add images, tables, and more.') ?></p>
-                
+
                 <?= $form->field($template, 'body')->widget(RichTextField::class, [
                     'id' => 'email_template_body_' . $template->template_type,
                     'layout' => RichTextField::LAYOUT_BLOCK,
@@ -99,7 +99,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="col-md-12">
                 <h5><?= Yii::t('SpaceJoinQuestionsModule.base', 'Email Footer') ?></h5>
                 <p class="help-block"><?= Yii::t('SpaceJoinQuestionsModule.base', 'Add a footer with contact information, social links, or a disclaimer. You can use plain text or rich text formatting.') ?></p>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <?= $form->field($template, 'footer')->widget(RichTextField::class, [
@@ -118,7 +118,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     'style' => 'height: 40px;',
                                     'title' => Yii::t('SpaceJoinQuestionsModule.base', 'Choose footer background color'),
                                 ])->label(Yii::t('SpaceJoinQuestionsModule.base', 'Footer Background Color')) ?>
-                                
+
                                 <?= $form->field($template, 'footer_bg_color')->textInput([
                                     'class' => 'form-control hex-input',
                                     'placeholder' => '#f8f9fa',
@@ -131,7 +131,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     'style' => 'height: 40px;',
                                     'title' => Yii::t('SpaceJoinQuestionsModule.base', 'Choose footer font color'),
                                 ])->label(Yii::t('SpaceJoinQuestionsModule.base', 'Footer Font Color')) ?>
-                                
+
                                 <?= $form->field($template, 'footer_font_color')->textInput([
                                     'class' => 'form-control hex-input',
                                     'placeholder' => '#6c757d',
@@ -299,28 +299,28 @@ input[type="color"]:hover {
 }
 </style>
 
-<script>
+<script <?= Html::nonce() ?>>
 $(document).ready(function() {
     // Sync color pickers with hex inputs
     $('input[type="color"]').on('change', function() {
         var hexInput = $(this).siblings('input[type="text"]');
         hexInput.val($(this).val());
     });
-    
+
     $('.hex-input').on('input', function() {
         var colorPicker = $(this).siblings('input[type="color"]');
         var hexValue = $(this).val();
-        
+
         // Validate hex color format
         if (/^#[0-9A-F]{6}$/i.test(hexValue)) {
             colorPicker.val(hexValue);
         }
     });
-    
+
     // Initialize hex inputs with color picker values
     $('input[type="color"]').each(function() {
         var hexInput = $(this).siblings('input[type="text"]');
         hexInput.val($(this).val());
     });
 });
-</script> 
+</script>

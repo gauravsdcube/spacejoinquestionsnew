@@ -1,7 +1,6 @@
 <?php
 
-use yii\helpers\Html;
-use yii\helpers\Url;
+use humhub\libs\Html;
 use humhub\widgets\Button;
 
 /* @var $this yii\web\View */
@@ -68,7 +67,7 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Join Questions');
                                         ->link($space->createUrl('/space-join-questions/admin/edit', ['id' => $question->id]))
                                         ->icon('edit')
                                         ->sm() ?>
-                                    
+
                                     <?= Html::beginForm($space->createUrl('/space-join-questions/admin/delete', ['id' => $question->id]), 'POST', ['style' => 'display: inline;']) ?>
                                         <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken) ?>
                                         <?= Button::danger(Yii::t('SpaceJoinQuestionsModule.base', 'Delete'))
@@ -111,7 +110,7 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Join Questions');
 </div>
 
 <?php if (!empty($questions)): ?>
-<script>
+<script <?= Html::nonce() ?>>
 // Make questions sortable
 $(document).ready(function() {
     $("#sortable-questions").sortable({
@@ -122,7 +121,7 @@ $(document).ready(function() {
             $('#sortable-questions .question-item').each(function() {
                 questionIds.push($(this).data('question-id'));
             });
-            
+
             $.post('<?= $space->createUrl('/space-join-questions/admin/sort') ?>', {
                 questions: questionIds
             });

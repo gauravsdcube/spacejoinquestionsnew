@@ -1,8 +1,8 @@
 <?php
 
-use yii\helpers\Html;
-use yii\widgets\ActiveForm;
+use humhub\libs\Html;
 use humhub\widgets\Button;
+use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
 /* @var $space humhub\modules\space\models\Space */
@@ -46,11 +46,11 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
 
         <div class="form-group">
             <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Module Information') ?></h4>
-            
+
             <dl class="dl-horizontal">
                 <dt><?= Yii::t('SpaceJoinQuestionsModule.base', 'Module Version:') ?></dt>
                 <dd>2.0.0</dd>
-                
+
                 <dt><?= Yii::t('SpaceJoinQuestionsModule.base', 'Questions Created:') ?></dt>
                 <dd>
                     <?php
@@ -60,7 +60,7 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
                     echo $questionCount;
                     ?>
                 </dd>
-                
+
                 <dt><?= Yii::t('SpaceJoinQuestionsModule.base', 'Total Applications:') ?></dt>
                 <dd>
                     <?php
@@ -77,7 +77,7 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
             <?= Button::primary(Yii::t('SpaceJoinQuestionsModule.base', 'Save Settings'))
                 ->submit()
                 ->icon('save') ?>
-            
+
             <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'Back to Questions'))
                 ->link($space->createUrl('/space-join-questions/admin/index'))
                 ->icon('arrow-left') ?>
@@ -85,4 +85,4 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
 
         <?php ActiveForm::end(); ?>
     </div>
-</div> 
+</div>

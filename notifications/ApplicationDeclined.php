@@ -2,15 +2,15 @@
 
 namespace humhub\modules\spaceJoinQuestions\notifications;
 
-use Yii;
-use yii\helpers\Html;
+use humhub\libs\Html;
 use humhub\modules\notification\components\BaseNotification;
 use humhub\modules\space\models\Membership;
 use humhub\modules\spaceJoinQuestions\models\DeclineReason;
+use Yii;
 
 /**
  * ApplicationDeclined Notification
- * 
+ *
  * Notifies users when their membership application is declined
  */
 class ApplicationDeclined extends BaseNotification
@@ -33,7 +33,7 @@ class ApplicationDeclined extends BaseNotification
 
     /**
      * Constructor to handle decline reason
-     * 
+     *
      * @param Membership|null $membership
      * @param string|null $declineReason
      */
@@ -42,9 +42,9 @@ class ApplicationDeclined extends BaseNotification
         if ($membership) {
             $this->source = $membership;
         }
-        
+
         $this->declineReason = $declineReason;
-        
+
         parent::__construct();
     }
 
@@ -63,7 +63,7 @@ class ApplicationDeclined extends BaseNotification
     {
         /** @var Membership|object $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return Yii::t('SpaceJoinQuestionsModule.base', 'Membership application declined');
         }
@@ -80,7 +80,7 @@ class ApplicationDeclined extends BaseNotification
     {
         /** @var Membership|object $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return '';
         }
@@ -107,7 +107,7 @@ class ApplicationDeclined extends BaseNotification
     {
         /** @var Membership|object $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return '';
         }
@@ -129,7 +129,7 @@ class ApplicationDeclined extends BaseNotification
 
     /**
      * Set the decline reason
-     * 
+     *
      * @param string $reason
      * @return $this
      */
@@ -141,7 +141,7 @@ class ApplicationDeclined extends BaseNotification
 
     /**
      * Get the decline reason
-     * 
+     *
      * @return string|null
      */
     public function getDeclineReason()
@@ -156,7 +156,7 @@ class ApplicationDeclined extends BaseNotification
     {
         /** @var Membership|object $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return null;
         }
@@ -171,14 +171,14 @@ class ApplicationDeclined extends BaseNotification
     {
         /** @var Membership|object $membership */
         $membership = $this->source;
-        
+
         return $membership && $membership->space ? $membership->space->id : null;
     }
 
     /**
      * Send notification directly without using the queue system
      * This bypasses the PHP 8.4 compatibility issues with the queue
-     * 
+     *
      * @param \humhub\modules\user\models\User $user
      * @return bool
      */
@@ -210,7 +210,7 @@ class ApplicationDeclined extends BaseNotification
 
     /**
      * Send email directly without notification system
-     * 
+     *
      * @param \humhub\modules\user\models\User $user
      * @return bool
      */
@@ -267,7 +267,7 @@ class ApplicationDeclined extends BaseNotification
 
     /**
      * Static method to create and send notification
-     * 
+     *
      * @param Membership $membership
      * @param string $declineReason
      * @param \humhub\modules\user\models\User $recipient
@@ -276,7 +276,7 @@ class ApplicationDeclined extends BaseNotification
     {
         // Store reason in database for persistence
         DeclineReason::createForMembership($membership->id, $declineReason);
-        
+
         // Create and send notification
         $notification = new static($membership, $declineReason);
         $notification->send($recipient);

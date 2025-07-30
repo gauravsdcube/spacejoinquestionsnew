@@ -2,14 +2,14 @@
 
 namespace humhub\modules\spaceJoinQuestions\notifications;
 
-use Yii;
-use yii\helpers\Html;
+use humhub\libs\Html;
 use humhub\modules\notification\components\BaseNotification;
 use humhub\modules\space\models\Membership;
+use Yii;
 
 /**
  * ApplicationAccepted Notification
- * 
+ *
  * Notifies users when their membership application is accepted
  */
 class ApplicationAccepted extends BaseNotification
@@ -39,7 +39,7 @@ class ApplicationAccepted extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return Yii::t('SpaceJoinQuestionsModule.base', 'Membership application accepted');
         }
@@ -56,7 +56,7 @@ class ApplicationAccepted extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return '';
         }
@@ -77,7 +77,7 @@ class ApplicationAccepted extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return '';
         }
@@ -98,7 +98,7 @@ class ApplicationAccepted extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return null;
         }
@@ -113,14 +113,14 @@ class ApplicationAccepted extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         return $membership && $membership->space ? $membership->space->id : null;
     }
 
     /**
      * Send notification directly without using the queue system
      * This bypasses the PHP 8.4 compatibility issues with the queue
-     * 
+     *
      * @param \humhub\modules\user\models\User $user
      * @return bool
      */
@@ -152,7 +152,7 @@ class ApplicationAccepted extends BaseNotification
 
     /**
      * Send email directly without notification system
-     * 
+     *
      * @param \humhub\modules\user\models\User $user
      * @return bool
      */

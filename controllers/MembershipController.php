@@ -2,14 +2,13 @@
 
 namespace humhub\modules\spaceJoinQuestions\controllers;
 
+use humhub\modules\space\controllers\SpaceController;
+use humhub\modules\space\models\Membership;
+use humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer;
+use humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion;
 use Yii;
 use yii\web\HttpException;
 use yii\web\Response;
-use humhub\modules\space\controllers\SpaceController;
-use humhub\modules\space\models\Membership;
-use humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion;
-use humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer;
-use humhub\modules\spaceJoinQuestions\widgets\JoinQuestionsForm;
 
 /**
  * MembershipController handles custom membership requests with questions
@@ -34,7 +33,7 @@ class MembershipController extends SpaceController
     public function actionRequest()
     {
         $space = $this->contentContainer;
-        
+
         // Check if user is already a member
         if ($space->isMember()) {
             throw new HttpException(400, 'You are already a member of this space');
@@ -57,7 +56,7 @@ class MembershipController extends SpaceController
 
         if (Yii::$app->request->isPost) {
             $transaction = Yii::$app->db->beginTransaction();
-            
+
             try {
                 // Create membership application
                 $membership = new Membership();
@@ -65,7 +64,7 @@ class MembershipController extends SpaceController
                 $membership->user_id = Yii::$app->user->id;
                 $membership->status = Membership::STATUS_APPLICANT;
                 $membership->request_message = Yii::$app->request->post('request_message', '');
-                
+
                 if (!$membership->save()) {
                     throw new \Exception('Failed to create membership application');
                 }
@@ -73,13 +72,13 @@ class MembershipController extends SpaceController
                 // Save answers to questions
                 foreach ($questions as $question) {
                     $answerText = Yii::$app->request->post("question_{$question->id}", '');
-                    
+
                     if (!empty($answerText)) {
                         $answer = new SpaceJoinAnswer();
                         $answer->membership_id = $membership->id;
                         $answer->question_id = $question->id;
                         $answer->answer_text = $answerText;
-                        
+
                         if (!$answer->save()) {
                             throw new \Exception('Failed to save answer');
                         }
@@ -93,7 +92,7 @@ class MembershipController extends SpaceController
                     $notification = new \humhub\modules\spaceJoinQuestions\notifications\ApplicationReceived();
                     $notification->source = $space;
                     $notification->originator = Yii::$app->user->identity;
-                    
+
                     // Send to all space administrators
                     foreach ($space->getAdmins() as $admin) {
                         $notification->send($admin);
@@ -113,7 +112,7 @@ class MembershipController extends SpaceController
 
             } catch (\Exception $e) {
                 $transaction->rollBack();
-                
+
                 if (Yii::$app->request->isAjax) {
                     Yii::$app->response->format = Response::FORMAT_JSON;
                     return [
@@ -126,7 +125,7 @@ class MembershipController extends SpaceController
             }
         }
 
-        return $this->render('request', [
+        return $this->renderAjax('request', [
             'space' => $space,
             'questions' => $questions,
         ]);
@@ -138,7 +137,7 @@ class MembershipController extends SpaceController
     public function actionStatus()
     {
         $space = $this->contentContainer;
-        
+
         $membership = Membership::find()
             ->where(['space_id' => $space->id, 'user_id' => Yii::$app->user->id])
             ->one();
@@ -165,7 +164,7 @@ class MembershipController extends SpaceController
     public function actionCancel()
     {
         $space = $this->contentContainer;
-        
+
         $membership = Membership::find()
             ->where(['space_id' => $space->id, 'user_id' => Yii::$app->user->id])
             ->one();
@@ -186,4 +185,4 @@ class MembershipController extends SpaceController
 
         return $this->redirect($space->createUrl('/space/space'));
     }
-} 
+}
