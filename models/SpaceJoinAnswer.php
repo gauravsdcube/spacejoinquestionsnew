@@ -2,10 +2,10 @@
 
 namespace humhub\modules\spaceJoinQuestions\models;
 
-use Yii;
-use yii\behaviors\TimestampBehavior;
 use humhub\components\ActiveRecord;
 use humhub\modules\space\models\Membership;
+use Yii;
+use yii\behaviors\TimestampBehavior;
 
 /**
  * SpaceJoinAnswer Model
@@ -88,7 +88,7 @@ class SpaceJoinAnswer extends ActiveRecord
 
     /**
      * Get answers for a membership with questions
-     * 
+     *
      * @param int $membershipId
      * @return array
      */
@@ -103,7 +103,7 @@ class SpaceJoinAnswer extends ActiveRecord
 
     /**
      * Get formatted answer text for display
-     * 
+     *
      * @return string
      */
     public function getFormattedAnswer()
@@ -116,18 +116,18 @@ class SpaceJoinAnswer extends ActiveRecord
         if ($this->question) {
             switch ($this->question->field_type) {
                 case SpaceJoinQuestion::FIELD_TYPE_CHECKBOX:
-                    return $this->answer_text === '1' ? 
-                        Yii::t('SpaceJoinQuestionsModule.base', 'Yes') : 
+                    return $this->answer_text === '1' ?
+                        Yii::t('SpaceJoinQuestionsModule.base', 'Yes') :
                         Yii::t('SpaceJoinQuestionsModule.base', 'No');
-                
+
                 case SpaceJoinQuestion::FIELD_TYPE_TEXTAREA:
-                    return nl2br(\yii\helpers\Html::encode($this->answer_text));
-                
+                    return nl2br(\humhub\libs\Html::encode($this->answer_text));
+
                 default:
-                    return \yii\helpers\Html::encode($this->answer_text);
+                    return \humhub\libs\Html::encode($this->answer_text);
             }
         }
 
-        return \yii\helpers\Html::encode($this->answer_text);
+        return \humhub\libs\Html::encode($this->answer_text);
     }
 }

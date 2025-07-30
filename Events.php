@@ -2,13 +2,13 @@
 
 namespace humhub\modules\spaceJoinQuestions;
 
-use Yii;
-use yii\helpers\Html;
-use yii\web\Application as WebApplication;
-use humhub\modules\space\widgets\Menu;
-use humhub\modules\space\widgets\MembershipButton;
 use humhub\modules\space\models\Membership;
+use humhub\modules\space\models\Space;
 use humhub\modules\space\modules\manage\controllers\MemberController;
+use humhub\modules\space\widgets\MembershipButton;
+use humhub\modules\space\widgets\Menu;
+use Yii;
+use yii\web\Application as WebApplication;
 
 /**
  * Event handlers for Space Join Questions module
@@ -108,6 +108,11 @@ class Events
             return;
         }
 
+        // Allow other types of membership requests
+        if ($space->join_policy !== Space::JOIN_POLICY_APPLICATION) {
+            return;
+        }
+
         // Get required questions
         $requiredQuestions = \humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion::find()
             ->where(['space_id' => $space->id, 'is_required' => 1])
@@ -116,9 +121,9 @@ class Events
         // Validate required questions are answered
         foreach ($requiredQuestions as $question) {
             $answer = Yii::$app->request->post('question_' . $question->id);
-            
+
             if (empty($answer)) {
-                $membership->addError('questions', 
+                $membership->addError('questions',
                     Yii::t('SpaceJoinQuestionsModule.base', 'Please answer the required question: {question}', [
                         'question' => $question->question_text
                     ])
@@ -158,7 +163,7 @@ class Events
         // Save answers
         foreach ($questions as $question) {
             $answer = Yii::$app->request->post('question_' . $question->id);
-            
+
             if (!empty($answer)) {
                 $answerModel = new \humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer();
                 $answerModel->membership_id = $membership->id;
@@ -179,7 +184,7 @@ class Events
     {
         /** @var MemberController $controller */
         $controller = $event->sender;
-        
+
         // Add custom actions for approve/decline with reasons
         if (in_array($event->action->id, ['approve-with-questions', 'decline-with-reason'])) {
             // These actions will be handled by our custom controller
@@ -189,27 +194,27 @@ class Events
 
     /**
      * Notify space administrators about new membership application
-     * 
+     *
      * @param Membership $membership
      */
     protected static function notifyAdminsAboutNewApplication($membership)
     {
         $space = $membership->space;
-        
+
         // Check if email notifications are enabled for this space
         if (!$space->getSettings()->get('emailNotifications', 'spaceJoinQuestions', true)) {
             return;
         }
-        
+
         // Get space administrators
         $admins = $space->getAdmins();
-        
+
         // Get custom email template if available
         $template = \humhub\modules\spaceJoinQuestions\models\EmailTemplate::findBySpaceAndType(
-            $space->id, 
+            $space->id,
             \humhub\modules\spaceJoinQuestions\models\EmailTemplate::TYPE_APPLICATION_RECEIVED
         );
-        
+
         foreach ($admins as $admin) {
             if ($template && $template->is_active) {
                 // Use custom template
@@ -226,7 +231,7 @@ class Events
 
     /**
      * Send custom email using template
-     * 
+     *
      * @param Membership $membership
      * @param User $recipient
      * @param EmailTemplate $template
@@ -236,7 +241,7 @@ class Events
     {
         $space = $membership->space;
         $user = $membership->user;
-        
+
         // Prepare variables
         $variables = [
             'space_name' => $space->name,
@@ -245,13 +250,13 @@ class Events
             'user_email' => $user->email,
             'application_date' => $membership->created_at, // Already in correct format
         ];
-        
+
         // Add application answers if available
         $answers = \humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer::find()
             ->where(['membership_id' => $membership->id])
             ->with('question')
             ->all();
-            
+
         if (!empty($answers)) {
             $answersText = '';
             foreach ($answers as $answer) {
@@ -262,17 +267,17 @@ class Events
         } else {
             $variables['application_answers'] = Yii::t('SpaceJoinQuestionsModule.base', 'No answers provided.');
         }
-        
+
         // Process template with recipient user for proper file token generation
         $processed = $template->processTemplate($variables, $recipient);
-        
+
         // Send email
         $mail = Yii::$app->mailer->compose()
             ->setFrom([Yii::$app->settings->get('mailer.systemEmailAddress') => Yii::$app->settings->get('mailer.systemEmailName')])
             ->setTo($recipient->email)
             ->setSubject($processed['subject'])
             ->setHtmlBody($processed['body']);
-            
+
         $mail->send();
     }
 }

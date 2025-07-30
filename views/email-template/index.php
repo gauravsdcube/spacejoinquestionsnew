@@ -1,7 +1,6 @@
 <?php
 
-use yii\helpers\Html;
-use yii\helpers\Url;
+use humhub\libs\Html;
 use humhub\modules\spaceJoinQuestions\models\EmailTemplate;
 
 /* @var $this yii\web\View */
@@ -30,7 +29,7 @@ function getTemplateDescription($type) {
         <h4><?= $this->title ?></h4>
         <p class="help-block"><?= Yii::t('SpaceJoinQuestionsModule.base', 'Customize email templates for membership applications. Use the variables below in your templates.') ?></p>
     </div>
-    
+
     <div class="panel-body">
         <div class="row">
             <div class="col-md-8">
@@ -72,16 +71,16 @@ function getTemplateDescription($type) {
                                                 $space->createUrl('/space-join-questions/email-template/edit', ['type' => $type]),
                                                 ['class' => 'btn btn-sm btn-primary']
                                             ) ?>
-                                            
+
                                             <?= Html::a(
                                                 '<i class="fa fa-eye"></i> ' . Yii::t('SpaceJoinQuestionsModule.base', 'Preview'),
                                                 $space->createUrl('/space-join-questions/email-template/preview', ['type' => $type]),
                                                 ['class' => 'btn btn-sm btn-info', 'target' => '_blank']
                                             ) ?>
-                                            
+
                                             <?php if ($template): ?>
                                                 <?= Html::a(
-                                                    '<i class="fa fa-toggle-' . ($template->is_active ? 'on' : 'off') . '"></i> ' . 
+                                                    '<i class="fa fa-toggle-' . ($template->is_active ? 'on' : 'off') . '"></i> ' .
                                                     ($template->is_active ? Yii::t('SpaceJoinQuestionsModule.base', 'Disable') : Yii::t('SpaceJoinQuestionsModule.base', 'Enable')),
                                                     $space->createUrl('/space-join-questions/email-template/toggle', ['type' => $type]),
                                                     [
@@ -90,7 +89,7 @@ function getTemplateDescription($type) {
                                                         'data-confirm' => Yii::t('SpaceJoinQuestionsModule.base', 'Are you sure?')
                                                     ]
                                                 ) ?>
-                                                
+
                                                 <?= Html::a(
                                                     '<i class="fa fa-refresh"></i> ' . Yii::t('SpaceJoinQuestionsModule.base', 'Reset'),
                                                     $space->createUrl('/space-join-questions/email-template/reset', ['type' => $type]),
@@ -109,7 +108,7 @@ function getTemplateDescription($type) {
                     </table>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
                 <div class="panel panel-info">
                     <div class="panel-heading">
@@ -117,7 +116,7 @@ function getTemplateDescription($type) {
                     </div>
                     <div class="panel-body">
                         <p><strong><?= Yii::t('SpaceJoinQuestionsModule.base', 'Use these variables in your templates:') ?></strong></p>
-                        
+
                         <h6><?= Yii::t('SpaceJoinQuestionsModule.base', 'General Variables') ?></h6>
                         <ul class="list-unstyled">
                             <li><code>{space_name}</code> - <?= Yii::t('SpaceJoinQuestionsModule.base', 'Space name') ?></li>
@@ -125,21 +124,21 @@ function getTemplateDescription($type) {
                             <li><code>{user_name}</code> - <?= Yii::t('SpaceJoinQuestionsModule.base', 'User name') ?></li>
                             <li><code>{user_email}</code> - <?= Yii::t('SpaceJoinQuestionsModule.base', 'User email') ?></li>
                         </ul>
-                        
+
                         <h6><?= Yii::t('SpaceJoinQuestionsModule.base', 'Date Variables') ?></h6>
                         <ul class="list-unstyled">
                             <li><code>{application_date}</code> - <?= Yii::t('SpaceJoinQuestionsModule.base', 'Application submission date') ?></li>
                             <li><code>{accepted_date}</code> - <?= Yii::t('SpaceJoinQuestionsModule.base', 'Acceptance date') ?></li>
                             <li><code>{declined_date}</code> - <?= Yii::t('SpaceJoinQuestionsModule.base', 'Decline date') ?></li>
                         </ul>
-                        
+
                         <h6><?= Yii::t('SpaceJoinQuestionsModule.base', 'Content Variables') ?></h6>
                         <ul class="list-unstyled">
                             <li><code>{application_answers}</code> - <?= Yii::t('SpaceJoinQuestionsModule.base', 'User answers to questions') ?></li>
                             <li><code>{decline_reason}</code> - <?= Yii::t('SpaceJoinQuestionsModule.base', 'Reason for decline') ?></li>
                             <li><code>{admin_notes}</code> - <?= Yii::t('SpaceJoinQuestionsModule.base', 'Admin notes') ?></li>
                         </ul>
-                        
+
                         <div class="alert alert-warning">
                             <i class="fa fa-exclamation-triangle"></i>
                             <strong><?= Yii::t('SpaceJoinQuestionsModule.base', 'Note:') ?></strong>
@@ -150,4 +149,4 @@ function getTemplateDescription($type) {
             </div>
         </div>
     </div>
-</div> 
+</div>

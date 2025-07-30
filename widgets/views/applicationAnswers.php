@@ -1,6 +1,6 @@
 <?php
 
-use yii\helpers\Html;
+use humhub\libs\Html;
 
 /* @var $this yii\web\View */
 /* @var $membership humhub\modules\space\models\Membership */
@@ -24,11 +24,11 @@ use yii\helpers\Html;
                         <?php if ($answer->question->is_required): ?>
                             <span class="label label-danger"><?= Yii::t('SpaceJoinQuestionsModule.base', 'Required') ?></span>
                         <?php endif; ?>
-                        
+
                         <div style="margin-top: 5px; padding: 10px; background-color: #f9f9f9; border-left: 3px solid #ddd;">
                             <?= $answer->getFormattedAnswer() ?>
                         </div>
-                        
+
                         <small class="text-muted">
                             <?= Yii::t('SpaceJoinQuestionsModule.base', 'Field Type: {type}', [
                                 'type' => $answer->question->getFieldTypeLabel()

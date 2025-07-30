@@ -2,14 +2,14 @@
 
 namespace humhub\modules\spaceJoinQuestions\notifications;
 
-use Yii;
-use yii\helpers\Html;
+use humhub\libs\Html;
 use humhub\modules\notification\components\BaseNotification;
 use humhub\modules\space\models\Membership;
+use Yii;
 
 /**
  * ApplicationReceived Notification
- * 
+ *
  * Notifies space administrators when a new membership application is received
  */
 class ApplicationReceived extends BaseNotification
@@ -39,7 +39,7 @@ class ApplicationReceived extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return Yii::t('SpaceJoinQuestionsModule.base', 'New membership application');
         }
@@ -56,7 +56,7 @@ class ApplicationReceived extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space || !$this->originator) {
             return '';
         }
@@ -74,7 +74,7 @@ class ApplicationReceived extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space || !$this->originator) {
             return '';
         }
@@ -92,7 +92,7 @@ class ApplicationReceived extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         if (!$membership || !$membership->space) {
             return null;
         }
@@ -107,7 +107,7 @@ class ApplicationReceived extends BaseNotification
     {
         /** @var Membership $membership */
         $membership = $this->source;
-        
+
         return $membership && $membership->space ? $membership->space->id : null;
     }
 }

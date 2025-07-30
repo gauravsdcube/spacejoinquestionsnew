@@ -1,6 +1,6 @@
 <?php
 
-use yii\helpers\Html;
+use humhub\libs\Html;
 use humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion;
 
 /* @var $this yii\web\View */
@@ -14,16 +14,16 @@ if (empty($questions)) {
 
 <div class="custom-questions-section">
     <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Please answer the following questions:') ?></h4>
-    
+
     <?php foreach ($questions as $question): ?>
         <div class="form-group">
             <?= Html::label(
-                Html::encode($question->question_text) . 
+                Html::encode($question->question_text) .
                 ($question->is_required ? ' <span class="required">*</span>' : ''),
                 "question_{$question->id}",
                 ['class' => 'control-label']
             ) ?>
-            
+
             <?php if ($question->field_type === SpaceJoinQuestion::FIELD_TYPE_TEXT): ?>
                 <?= Html::textarea("question_{$question->id}", '', [
                     'id' => "question_{$question->id}",
@@ -32,12 +32,12 @@ if (empty($questions)) {
                     'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your answer here...'),
                     'required' => $question->is_required,
                 ]) ?>
-                
+
             <?php elseif ($question->field_type === SpaceJoinQuestion::FIELD_TYPE_SELECT): ?>
-                <?php 
+                <?php
                 $options = [];
                 $options[''] = Yii::t('SpaceJoinQuestionsModule.base', '-- Select an option --');
-                
+
                 if (!empty($question->field_options)) {
                     $optionLines = explode("\n", trim($question->field_options));
                     foreach ($optionLines as $option) {
@@ -53,9 +53,9 @@ if (empty($questions)) {
                     'class' => 'form-control',
                     'required' => $question->is_required,
                 ]) ?>
-                
+
             <?php elseif ($question->field_type === SpaceJoinQuestion::FIELD_TYPE_RADIO): ?>
-                <?php 
+                <?php
                 $options = [];
                 if (!empty($question->field_options)) {
                     $optionLines = explode("\n", trim($question->field_options));
@@ -78,7 +78,7 @@ if (empty($questions)) {
                         </label>
                     </div>
                 <?php endforeach; ?>
-                
+
             <?php else: ?>
                 <?= Html::textInput("question_{$question->id}", '', [
                     'id' => "question_{$question->id}",
@@ -87,7 +87,7 @@ if (empty($questions)) {
                     'required' => $question->is_required,
                 ]) ?>
             <?php endif; ?>
-            
+
             <?php if ($question->is_required): ?>
                 <div class="help-block">
                     <span class="text-danger"><?= Yii::t('SpaceJoinQuestionsModule.base', 'This question is required.') ?></span>

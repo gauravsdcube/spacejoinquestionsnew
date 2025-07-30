@@ -1,11 +1,9 @@
 <?php
 
-use yii\helpers\Html;
-use yii\widgets\DetailView;
-use humhub\widgets\Button;
+use humhub\libs\Html;
 use humhub\modules\user\widgets\Image;
 use humhub\modules\user\widgets\UserTag;
-use humhub\libs\Helpers;
+use humhub\widgets\Button;
 
 /* @var $this yii\web\View */
 /* @var $space humhub\modules\space\models\Space */
@@ -100,14 +98,14 @@ $isDeclined = isset($isDeclined) ? $isDeclined : false;
                             <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Question Answers') ?></h4>
                         </div>
                         <div class="panel-body">
-                            <?php 
+                            <?php
                             // Debug: Log the number of answers to help identify duplication
                             Yii::error('Number of answers: ' . count($answers));
-                            
+
                             // Use array_unique to remove duplicates based on question_id and answer_text
                             $uniqueAnswers = [];
                             $seen = [];
-                            
+
                             foreach ($answers as $answer) {
                                 $key = $answer->question_id . '_' . $answer->answer_text;
                                 if (!isset($seen[$key])) {
@@ -115,7 +113,7 @@ $isDeclined = isset($isDeclined) ? $isDeclined : false;
                                     $uniqueAnswers[] = $answer;
                                 }
                             }
-                            
+
                             foreach ($uniqueAnswers as $answer): ?>
                                 <div class="row">
                                     <div class="col-md-12">
@@ -147,7 +145,7 @@ $isDeclined = isset($isDeclined) ? $isDeclined : false;
                                     'date' => Yii::$app->formatter->asDatetime($application->processed_at)
                                 ]) ?>
                             </div>
-                            
+
                             <?php if ($application->decline_reason): ?>
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
@@ -160,7 +158,7 @@ $isDeclined = isset($isDeclined) ? $isDeclined : false;
                                     </div>
                                 </div>
                             <?php endif; ?>
-                            
+
                             <?php if ($application->processedBy): ?>
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
@@ -183,7 +181,7 @@ $isDeclined = isset($isDeclined) ? $isDeclined : false;
                                     </div>
                                 </div>
                             <?php endif; ?>
-                            
+
                         <?php elseif ($application->status == \humhub\modules\space\models\Membership::STATUS_APPLICANT): ?>
                             <!-- Pending Application Actions -->
                             <div class="btn-group-vertical btn-block">
@@ -193,9 +191,9 @@ $isDeclined = isset($isDeclined) ? $isDeclined : false;
                                         <i class="fa fa-check"></i> <?= Yii::t('SpaceJoinQuestionsModule.base', 'Approve Application') ?>
                                     </button>
                                 </form>
-                                
+
                                 <div style="height: 20px; margin: 10px 0;"></div>
-                                
+
                                 <form method="post" action="<?= $space->createUrl('/space-join-questions/admin/decline', ['membershipId' => $application->id]) ?>" style="display: inline;" id="decline-form">
                                     <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken) ?>
                                     <div class="form-group">
@@ -206,8 +204,8 @@ $isDeclined = isset($isDeclined) ? $isDeclined : false;
                                         <i class="fa fa-times"></i> <?= Yii::t('SpaceJoinQuestionsModule.base', 'Decline Application') ?>
                                     </button>
                                 </form>
-                                
-                                <script>
+
+                                <script <?= Html::nonce() ?>>
                                 function validateDeclineForm() {
                                     var reason = document.getElementById('decline-reason').value.trim();
                                     if (reason === '') {
@@ -231,4 +229,4 @@ $isDeclined = isset($isDeclined) ? $isDeclined : false;
             </div>
         </div>
     </div>
-</div> 
+</div>

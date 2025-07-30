@@ -1,9 +1,9 @@
 <?php
 
-use yii\helpers\Html;
-use yii\widgets\ActiveForm;
-use humhub\widgets\Button;
+use humhub\libs\Html;
 use humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion;
+use humhub\widgets\Button;
+use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
 /* @var $space humhub\modules\space\models\Space */
@@ -72,7 +72,7 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Create Question');
             <?= Button::primary(Yii::t('SpaceJoinQuestionsModule.base', 'Create Question'))
                 ->submit()
                 ->icon('save') ?>
-            
+
             <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'Cancel'))
                 ->link($space->createUrl('/space-join-questions/admin/index'))
                 ->icon('times') ?>
@@ -82,7 +82,7 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Create Question');
     </div>
 </div>
 
-<script>
+<script <?= Html::nonce() ?>>
 $(document).ready(function() {
     // Show/hide field options based on field type
     function toggleFieldOptions() {

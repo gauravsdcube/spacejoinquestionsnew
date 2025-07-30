@@ -1,10 +1,10 @@
 <?php
 
-use yii\helpers\Html;
+use humhub\libs\Html;
+use humhub\modules\user\widgets\Image;
+use humhub\widgets\Button;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
-use humhub\widgets\Button;
-use humhub\modules\user\widgets\Image;
 
 /* @var $this yii\web\View */
 /* @var $space humhub\modules\space\models\Space */
@@ -31,27 +31,27 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Membership Applications'
                 <?= Yii::$app->session->getFlash('success') ?>
             </div>
         <?php endif; ?>
-        
+
         <?php if (Yii::$app->session->hasFlash('error')): ?>
             <div class="alert alert-danger">
                 <i class="fa fa-exclamation-circle"></i>
                 <?= Yii::$app->session->getFlash('error') ?>
             </div>
         <?php endif; ?>
-        
+
         <?php if ($dataProvider->totalCount == 0): ?>
             <div class="alert alert-info text-center">
                 <i class="fa fa-info-circle fa-2x"></i>
                 <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'No Pending Applications') ?></h4>
                 <p><?= Yii::t('SpaceJoinQuestionsModule.base', 'There are currently no pending membership applications for this space.') ?></p>
-                
+
                 <?= Button::primary(Yii::t('SpaceJoinQuestionsModule.base', 'Manage Questions'))
                     ->link($space->createUrl('/space-join-questions/admin/index'))
                     ->icon('question-circle') ?>
             </div>
         <?php else: ?>
             <?php Pjax::begin(['id' => 'applications-pjax']); ?>
-            
+
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
                 'layout' => '{items}{pager}',
@@ -103,7 +103,7 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Membership Applications'
                     ],
                 ],
             ]); ?>
-            
+
             <?php Pjax::end(); ?>
         <?php endif; ?>
     </div>
@@ -124,4 +124,4 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Membership Applications'
             </div>
         </div>
     </div>
-</div> 
+</div>
