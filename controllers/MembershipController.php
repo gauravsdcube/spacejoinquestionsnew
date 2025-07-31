@@ -99,14 +99,6 @@ class MembershipController extends SpaceController
                     }
                 }
 
-                if (Yii::$app->request->isAjax) {
-                    Yii::$app->response->format = Response::FORMAT_JSON;
-                    return [
-                        'success' => true,
-                        'message' => Yii::t('SpaceJoinQuestionsModule.base', 'Your application has been submitted successfully. You will be notified when the administrators review your application.'),
-                    ];
-                }
-
                 $this->view->success(Yii::t('SpaceJoinQuestionsModule.base', 'Application submitted successfully'));
                 return $this->redirect($space->createUrl('/space-join-questions/membership/status'));
 
