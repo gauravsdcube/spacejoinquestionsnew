@@ -4,7 +4,7 @@ A production-ready HumHub module that adds a comprehensive space membership appl
 
 **Copyright © 2025 D Cube Consulting Ltd. All rights reserved.**
 
-## 🚀 Version: 2.0.0 (Production Ready)
+## 🚀 Version: 2.0.1 (Production Ready)
 
 ### Overview
 
