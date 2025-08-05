@@ -7,7 +7,7 @@ return [
     'id' => 'space-join-questions',
     'class' => Module::class,
     'namespace' => 'humhub\\modules\\spaceJoinQuestions',
-    'version' => '2.0.0',
+    'version' => '2.0.1',
     'urlManagerRules' => [
         '<spaceContainer>/membership/request-membership-form' => 'space-join-questions/membership/request-membership-form',
         '<spaceContainer>/membership/status' => 'space-join-questions/membership/status',
