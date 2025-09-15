@@ -44,7 +44,7 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
             <div class="alert alert-info">
                 <i class="fa fa-info-circle"></i>
                 <strong><?= Yii::t('SpaceJoinQuestionsModule.base', 'Note:') ?></strong>
-                <?= Yii::t('SpaceJoinQuestionsModule.base', 'Email notifications are sent to all space administrators. You can customize email templates in the Email Templates section.') ?>
+                <?= Yii::t('SpaceJoinQuestionsModule.base', 'By default, email notifications are sent to all space administrators. You can customize who receives notifications using the Manage Recipients button below. You can also customize email templates in the Email Templates section.') ?>
             </div>
         </div>
 
@@ -53,31 +53,30 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
         <div class="form-group">
             <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Notification Recipients') ?></h4>
             <p class="text-muted">
-                <?= Yii::t('SpaceJoinQuestionsModule.base', 'Email notifications are sent to all space administrators.') ?>
+                <?= Yii::t('SpaceJoinQuestionsModule.base', 'Manage who receives email notifications when new membership applications are submitted.') ?>
             </p>
 
             <?php
-            $admins = $space->getAdmins();
-            if (!empty($admins)):
+            $recipients = \humhub\modules\spaceJoinQuestions\models\SpaceJoinNotificationRecipient::getRecipientsForSpace($space->id);
+            $recipientCount = count($recipients);
             ?>
-                <div class="well">
-                    <h5><?= Yii::t('SpaceJoinQuestionsModule.base', 'Current Space Administrators:') ?></h5>
-                    <ul class="list-unstyled">
-                        <?php foreach ($admins as $admin): ?>
-                            <li>
-                                <i class="fa fa-user"></i>
-                                <?= Html::encode($admin->displayName) ?>
-                                <small class="text-muted">(<?= Html::encode($admin->email) ?>)</small>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            <?php else: ?>
-                <div class="alert alert-warning">
-                    <i class="fa fa-exclamation-triangle"></i>
-                    <?= Yii::t('SpaceJoinQuestionsModule.base', 'No space administrators found. Notifications will not be sent.') ?>
-                </div>
-            <?php endif; ?>
+            
+            <div class="form-group">
+                <label><?= Yii::t('SpaceJoinQuestionsModule.base', 'Current Recipients:') ?></label>
+                <p>
+                    <?php if ($recipientCount > 0): ?>
+                        <?= $recipientCount ?> custom recipient(s) configured
+                    <?php else: ?>
+                        All space administrators (default)
+                    <?php endif; ?>
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <?= Button::primary(Yii::t('SpaceJoinQuestionsModule.base', 'Manage Recipients'))
+                    ->link($space->createUrl('/space-join-questions/admin/notification-recipients'))
+                    ->icon('users') ?>
+            </div>
         </div>
 
 

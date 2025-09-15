@@ -206,8 +206,18 @@ class Events
             return;
         }
         
-        // Get space administrators
-        $admins = $space->getAdmins();
+        // Get custom notification recipients
+        $recipients = \humhub\modules\spaceJoinQuestions\models\SpaceJoinNotificationRecipient::getRecipientsForSpace($space->id);
+        
+        if (empty($recipients)) {
+            // Fallback to all space administrators if no custom recipients
+            $recipients = $space->getAdmins();
+        } else {
+            // Convert to user objects
+            $recipients = array_map(function($recipient) {
+                return $recipient->user;
+            }, $recipients);
+        }
 
         // Get custom email template if available
         $template = \humhub\modules\spaceJoinQuestions\models\EmailTemplate::findBySpaceAndType(
@@ -215,7 +225,7 @@ class Events
             \humhub\modules\spaceJoinQuestions\models\EmailTemplate::TYPE_APPLICATION_RECEIVED
         );
 
-        foreach ($admins as $admin) {
+        foreach ($recipients as $admin) {
             try {
                 if ($template && $template->is_active) {
                     // Use custom template

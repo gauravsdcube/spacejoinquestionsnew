@@ -38,6 +38,7 @@ class AdminController extends SpaceController
                     'sort' => ['POST'],
                     'approve' => ['POST'],
                     'decline' => ['POST'],
+                    'save-recipients' => ['POST'],
                 ],
             ],
         ];
@@ -491,4 +492,69 @@ class AdminController extends SpaceController
             
         $mail->send();
     }
+
+    /**
+     * Manage notification recipients
+     */
+    public function actionNotificationRecipients()
+    {
+        $space = $this->contentContainer;
+        
+        // Get space administrators (including owner)
+        $admins = $space->getAdmins();
+        $owner = $space->getOwnerUser()->one();
+        
+        // Add owner to admins list if not already included
+        $allAdmins = [];
+        if ($owner) {
+            $allAdmins[] = $owner;
+        }
+        foreach ($admins as $admin) {
+            if (!$owner || $admin->id !== $owner->id) {
+                $allAdmins[] = $admin;
+            }
+        }
+        
+        // Get currently selected recipients
+        $selectedRecipients = \humhub\modules\spaceJoinQuestions\models\SpaceJoinNotificationRecipient::getRecipientsForSpace($space->id);
+        $selectedUserIds = array_column($selectedRecipients, 'user_id');
+        
+        return $this->render('notification-recipients', [
+            'space' => $space,
+            'admins' => $allAdmins,
+            'selectedUserIds' => $selectedUserIds,
+        ]);
+    }
+
+    /**
+     * Save admin notification recipients
+     */
+    public function actionSaveRecipients()
+    {
+        $space = $this->contentContainer;
+        
+        if (Yii::$app->request->isPost) {
+            $selectedUserIds = Yii::$app->request->post('recipients', []);
+            
+            // Clear existing recipients
+            \humhub\modules\spaceJoinQuestions\models\SpaceJoinNotificationRecipient::clearRecipientsForSpace($space->id);
+            
+            // Add selected recipients
+            $success = true;
+            foreach ($selectedUserIds as $userId) {
+                if (!\humhub\modules\spaceJoinQuestions\models\SpaceJoinNotificationRecipient::addRecipient($space->id, $userId)) {
+                    $success = false;
+                }
+            }
+            
+            if ($success) {
+                $this->view->success('Notification recipients updated successfully');
+            } else {
+                $this->view->error('Some recipients could not be saved');
+            }
+        }
+        
+        return $this->redirect($space->createUrl('/space-join-questions/admin/notification-recipients'));
+    }
+
 } 

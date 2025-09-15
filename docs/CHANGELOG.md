@@ -5,6 +5,30 @@ All notable changes to the Space Join Questions module will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-01-15
+
+### ✨ Added
+- **Simplified Notification Recipients**: New checkbox-based interface for selecting space administrators as email notification recipients
+- **Space Admin Integration**: Automatic detection and listing of space administrators (including space owner)
+- **Visual Role Indicators**: Clear labeling of space owners vs administrators in the recipient selection interface
+
+### 🔧 Changed
+- **Improved User Experience**: Replaced complex user search functionality with simple checkbox selection
+- **Better Performance**: Removed AJAX-based user search that was causing database query issues
+- **Cleaner Interface**: Streamlined notification recipient management with intuitive checkbox interface
+
+### 🗑️ Removed
+- **User Search Functionality**: Removed the problematic user search feature that was causing 404 errors
+- **Add/Remove Recipient Actions**: Simplified to single save action for all recipient changes
+- **Complex JavaScript**: Removed unnecessary JavaScript files and AJAX functionality
+- **Debug Logging**: Cleaned up excessive debug logging from user search functionality
+
+### 🐛 Fixed
+- **404 Errors**: Fixed URL routing issues with notification recipient management
+- **Content Security Policy**: Resolved CSP violations from inline JavaScript
+- **Database Queries**: Fixed user search queries that were incorrectly joining tables
+- **Asset Loading**: Resolved issues with missing CSS/JS files and incorrect asset paths
+
 ## [2.0.0] - 2025-01-XX
 
 ### 🎉 Complete Redesign

@@ -12,7 +12,7 @@ class SpaceJoinQuestionsAsset extends AssetBundle
     /**
      * @inheritdoc
      */
-    public $sourcePath = '@spaceJoinQuestions/resources';
+    public $sourcePath = '@app/modules/space-join-questions/assets';
 
     /**
      * @inheritdoc
