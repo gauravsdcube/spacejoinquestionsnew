@@ -148,8 +148,8 @@ class Events
         // Note: Answers are now saved in the controller's actionRequest method
         // This prevents double-saving of answers
 
-        // Email notification is now sent from the controller after answers are saved
-        // to prevent race condition where answers are not available yet
+        // Notify space administrators about new application
+        static::notifyAdminsAboutNewApplication($membership);
     }
 
     /**
@@ -188,7 +188,7 @@ class Events
      *
      * @param Membership $membership
      */
-    public static function notifyAdminsAboutNewApplication($membership)
+    protected static function notifyAdminsAboutNewApplication($membership)
     {
         $space = $membership->space;
         

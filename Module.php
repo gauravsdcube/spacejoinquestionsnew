@@ -15,7 +15,7 @@ use yii\helpers\Url;
  * with proper approval workflow and notifications.
  *
  * @author D Cube Consulting Ltd <info@dcubeconsulting.co.uk>
- * @version 2.0.1
+ * @version 2.0.02
  * @since 1.0.0
  * @copyright 2025 D Cube Consulting Ltd. All rights reserved.
  */
@@ -172,7 +172,7 @@ class Module extends ContentContainerModule
      */
     public function getVersion()
     {
-        return '2.0.0';
+        return '2.0.02';
     }
 
     /**

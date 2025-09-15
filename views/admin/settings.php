@@ -40,49 +40,66 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
             <div class="help-block">
                 <?= Yii::t('SpaceJoinQuestionsModule.base', 'When enabled, space administrators will receive an email notification each time someone submits a membership application with custom question answers.') ?>
             </div>
+
+            <div class="alert alert-info">
+                <i class="fa fa-info-circle"></i>
+                <strong><?= Yii::t('SpaceJoinQuestionsModule.base', 'Note:') ?></strong>
+                <?= Yii::t('SpaceJoinQuestionsModule.base', 'Email notifications are sent to all space administrators. You can customize email templates in the Email Templates section.') ?>
+            </div>
         </div>
 
         <hr>
 
         <div class="form-group">
-            <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Module Information') ?></h4>
+            <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Notification Recipients') ?></h4>
+            <p class="text-muted">
+                <?= Yii::t('SpaceJoinQuestionsModule.base', 'Email notifications are sent to all space administrators.') ?>
+            </p>
 
-            <dl class="dl-horizontal">
-                <dt><?= Yii::t('SpaceJoinQuestionsModule.base', 'Module Version:') ?></dt>
-                <dd>2.0.0</dd>
-
-                <dt><?= Yii::t('SpaceJoinQuestionsModule.base', 'Questions Created:') ?></dt>
-                <dd>
-                    <?php
-                    $questionCount = \humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion::find()
-                        ->where(['space_id' => $space->id])
-                        ->count();
-                    echo $questionCount;
-                    ?>
-                </dd>
-
-                <dt><?= Yii::t('SpaceJoinQuestionsModule.base', 'Total Applications:') ?></dt>
-                <dd>
-                    <?php
-                    $applicationCount = \humhub\modules\space\models\Membership::find()
-                        ->where(['space_id' => $space->id, 'status' => \humhub\modules\space\models\Membership::STATUS_APPLICANT])
-                        ->count();
-                    echo $applicationCount;
-                    ?>
-                </dd>
-            </dl>
+            <?php
+            $admins = $space->getAdmins();
+            if (!empty($admins)):
+            ?>
+                <div class="well">
+                    <h5><?= Yii::t('SpaceJoinQuestionsModule.base', 'Current Space Administrators:') ?></h5>
+                    <ul class="list-unstyled">
+                        <?php foreach ($admins as $admin): ?>
+                            <li>
+                                <i class="fa fa-user"></i>
+                                <?= Html::encode($admin->displayName) ?>
+                                <small class="text-muted">(<?= Html::encode($admin->email) ?>)</small>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <?= Yii::t('SpaceJoinQuestionsModule.base', 'No space administrators found. Notifications will not be sent.') ?>
+                </div>
+            <?php endif; ?>
         </div>
+
+
 
         <div class="form-group">
             <?= Button::primary(Yii::t('SpaceJoinQuestionsModule.base', 'Save Settings'))
                 ->submit()
                 ->icon('save') ?>
-
-            <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'Back to Questions'))
-                ->link($space->createUrl('/space-join-questions/admin/index'))
-                ->icon('arrow-left') ?>
         </div>
 
         <?php ActiveForm::end(); ?>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-12">
+                <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'Go Back'))
+                    ->link($space->createUrl('/space-join-questions/membership/index'))
+                    ->icon('arrow-left') ?>
+            </div>
+        </div>
     </div>
 </div>

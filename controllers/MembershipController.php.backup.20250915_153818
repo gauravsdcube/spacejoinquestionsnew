@@ -121,11 +121,6 @@ class MembershipController extends SpaceController
 
                 $transaction->commit();
 
-                // Send email notification after transaction is committed
-                \humhub\modules\spaceJoinQuestions\Events::notifyAdminsAboutNewApplication($membership);
-
-                // Send email notification after transaction is committed
-
                 if (Yii::$app->request->isAjax) {
                     Yii::$app->response->format = Response::FORMAT_JSON;
                     return [
@@ -214,8 +209,6 @@ class MembershipController extends SpaceController
             // Delete the membership (this should trigger the EVENT_BEFORE_DELETE event as well)
             if ($membership->delete()) {
                 $transaction->commit();
-
-                // Send email notification after transaction is committed
                 
                 Yii::info("Application cancelled successfully. Deleted {$answersDeleted} answers for membership ID {$membership->id}", 'spaceJoinQuestions');
                 $this->view->success(Yii::t('SpaceJoinQuestionsModule.base', 'Application cancelled successfully'));

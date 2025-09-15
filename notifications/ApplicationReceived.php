@@ -27,6 +27,11 @@ class ApplicationReceived extends BaseNotification
     /**
      * @inheritdoc
      */
+    public $suppressSendToOriginator = false;
+
+    /**
+     * @inheritdoc
+     */
     public function category()
     {
         return new \humhub\modules\space\notifications\SpaceMemberNotificationCategory();
@@ -109,5 +114,39 @@ class ApplicationReceived extends BaseNotification
         $membership = $this->source;
 
         return $membership && $membership->space ? $membership->space->id : null;
+    }
+
+    /**
+     * Send notification directly without queue
+     * 
+     * @param \humhub\modules\user\models\User $user
+     */
+    public function sendDirect($user)
+    {
+        // Save notification record
+        $this->saveRecord($user);
+        
+        // Send email directly
+        $this->sendDirectEmail($user);
+    }
+
+    /**
+     * Send email directly
+     * 
+     * @param \humhub\modules\user\models\User $user
+     */
+    protected function sendDirectEmail($user)
+    {
+        try {
+            $mail = Yii::$app->mailer->compose()
+                ->setFrom([Yii::$app->settings->get('mailer.systemEmailAddress') => Yii::$app->settings->get('mailer.systemEmailName')])
+                ->setTo($user->email)
+                ->setSubject($this->getMailSubject())
+                ->setHtmlBody($this->html());
+            
+            $mail->send();
+        } catch (\Exception $e) {
+            Yii::error('Error sending direct email notification: ' . $e->getMessage());
+        }
     }
 }

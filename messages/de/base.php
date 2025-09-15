@@ -32,7 +32,6 @@ return [
     'Text Area' => 'Textbereich',
     'Dropdown' => 'Dropdown',
     'Radio Buttons' => 'Radio-Buttons',
-    'Checkbox' => 'Checkbox',
 
     // Form Labels
     'Additional Questions' => 'Zusätzliche Fragen',

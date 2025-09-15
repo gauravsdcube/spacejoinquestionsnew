@@ -93,9 +93,9 @@ $(document).ready(function() {
                     // Show success message and close modal
                     humhub.modules.ui.status.success(response.message);
                     $('#globalModal').modal('hide');
-                    // Refresh page to update membership status
+                    // Redirect to status page instead of reloading
                     setTimeout(function() {
-                        window.location.reload();
+                        window.location.href = '<?= $space->createUrl('/space-join-questions/membership/status') ?>';
                     }, 1000);
                 } else {
                     // Show error messages

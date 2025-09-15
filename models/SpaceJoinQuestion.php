@@ -33,7 +33,6 @@ class SpaceJoinQuestion extends ActiveRecord
     const FIELD_TYPE_TEXTAREA = 'textarea';
     const FIELD_TYPE_SELECT = 'select';
     const FIELD_TYPE_RADIO = 'radio';
-    const FIELD_TYPE_CHECKBOX = 'checkbox';
 
     /**
      * @inheritdoc
@@ -139,7 +138,6 @@ class SpaceJoinQuestion extends ActiveRecord
             self::FIELD_TYPE_TEXTAREA => Yii::t('SpaceJoinQuestionsModule.base', 'Text Area'),
             self::FIELD_TYPE_SELECT => Yii::t('SpaceJoinQuestionsModule.base', 'Dropdown'),
             self::FIELD_TYPE_RADIO => Yii::t('SpaceJoinQuestionsModule.base', 'Radio Buttons'),
-            self::FIELD_TYPE_CHECKBOX => Yii::t('SpaceJoinQuestionsModule.base', 'Checkbox'),
         ];
     }
 

@@ -95,15 +95,10 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Join Questions');
 <div class="panel panel-default">
     <div class="panel-body">
         <div class="row">
-            <div class="col-md-6">
-                <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'View Applications'))
-                    ->link($space->createUrl('/space-join-questions/admin/applications'))
-                    ->icon('users') ?>
-            </div>
-            <div class="col-md-6 text-right">
-                <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'Settings'))
-                    ->link($space->createUrl('/space-join-questions/admin/settings'))
-                    ->icon('cog') ?>
+            <div class="col-md-12">
+                <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'Go Back'))
+                    ->link($space->createUrl('/space-join-questions/membership/index'))
+                    ->icon('arrow-left') ?>
             </div>
         </div>
     </div>

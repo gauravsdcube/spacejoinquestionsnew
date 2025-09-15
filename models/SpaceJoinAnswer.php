@@ -115,11 +115,6 @@ class SpaceJoinAnswer extends ActiveRecord
         // Handle different field types
         if ($this->question) {
             switch ($this->question->field_type) {
-                case SpaceJoinQuestion::FIELD_TYPE_CHECKBOX:
-                    return $this->answer_text === '1' ?
-                        Yii::t('SpaceJoinQuestionsModule.base', 'Yes') :
-                        Yii::t('SpaceJoinQuestionsModule.base', 'No');
-
                 case SpaceJoinQuestion::FIELD_TYPE_TEXTAREA:
                     return nl2br(\humhub\libs\Html::encode($this->answer_text));
 

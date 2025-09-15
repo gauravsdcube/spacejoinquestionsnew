@@ -7,11 +7,12 @@ return [
     'id' => 'space-join-questions',
     'class' => Module::class,
     'namespace' => 'humhub\\modules\\spaceJoinQuestions',
-    'version' => '2.0.1',
+    'version' => '2.0.02',
     'urlManagerRules' => [
         '<spaceContainer>/membership/request-membership-form' => 'space-join-questions/membership/request-membership-form',
         '<spaceContainer>/membership/status' => 'space-join-questions/membership/status',
         '<spaceContainer>/membership/cancel' => 'space-join-questions/membership/cancel',
+        '<spaceContainer>/membership' => 'space-join-questions/membership/index',
         '<spaceContainer>/admin/approve' => 'space-join-questions/admin/approve',
         '<spaceContainer>/admin/decline' => 'space-join-questions/admin/decline',
     ],
@@ -35,6 +36,11 @@ return [
             'class' => \humhub\modules\space\models\Membership::class,
             'event' => \humhub\modules\space\models\Membership::EVENT_AFTER_INSERT,
             'callback' => [Events::class, 'onMembershipAfterInsert'],
+        ],
+        [
+            'class' => \humhub\modules\space\models\Membership::class,
+            'event' => \humhub\modules\space\models\Membership::EVENT_BEFORE_DELETE,
+            'callback' => [Events::class, 'onMembershipBeforeDelete'],
         ],
     ],
     'notifications' => [

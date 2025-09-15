@@ -2,6 +2,7 @@
 
 use humhub\libs\Html;
 use humhub\modules\spaceJoinQuestions\models\EmailTemplate;
+use humhub\widgets\Button;
 
 /* @var $this yii\web\View */
 /* @var $space humhub\modules\space\models\Space */
@@ -146,6 +147,18 @@ function getTemplateDescription($type) {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-12">
+                <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'Go Back'))
+                    ->link($space->createUrl('/space-join-questions/membership/index'))
+                    ->icon('arrow-left') ?>
             </div>
         </div>
     </div>

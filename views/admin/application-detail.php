@@ -230,3 +230,20 @@ $isDeclined = isset($isDeclined) ? $isDeclined : false;
         </div>
     </div>
 </div>
+
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-6">
+                <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'Go Back'))
+                    ->link($space->createUrl('/space-join-questions/admin/applications'))
+                    ->icon('arrow-left') ?>
+            </div>
+            <div class="col-md-6 text-right">
+                <?= Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'Manage Membership'))
+                    ->link($space->createUrl('/space-join-questions/membership/index'))
+                    ->icon('users') ?>
+            </div>
+        </div>
+    </div>
+</div>

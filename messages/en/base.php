@@ -9,6 +9,16 @@ return [
     // Menu Items
     'Join Questions' => 'Join Questions',
     'Membership Applications' => 'Membership Applications',
+    'Email Templates' => 'Email Templates',
+    'Manage Membership' => 'Manage Membership',
+
+    // Manage Membership Page
+    'Review and manage membership applications from users who want to join this space.' => 'Review and manage membership applications from users who want to join this space.',
+    'Configure custom questions that users must answer when requesting membership.' => 'Configure custom questions that users must answer when requesting membership.',
+    'Customize email templates for membership notifications and communications.' => 'Customize email templates for membership notifications and communications.',
+    'View Applications' => 'View Applications',
+    'Manage Questions' => 'Manage Questions',
+    'Manage Templates' => 'Manage Templates',
 
     // Permissions
     'Manage Join Questions' => 'Manage Join Questions',
@@ -32,7 +42,6 @@ return [
     'Text Area' => 'Text Area',
     'Dropdown' => 'Dropdown',
     'Radio Buttons' => 'Radio Buttons',
-    'Checkbox' => 'Checkbox',
 
     // Form Labels
     'Additional Questions' => 'Additional Questions',

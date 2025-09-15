@@ -1,7 +1,6 @@
 <?php
 
 use humhub\libs\Html;
-use humhub\modules\spaceJoinQuestions\widgets\ApplicationAnswers;
 use humhub\widgets\Button;
 
 /* @var $this yii\web\View */
@@ -76,13 +75,49 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Application Status');
                         </div>
                     <?php endif; ?>
 
-                    <hr>
+                    <?php if (!empty($answers)): ?>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Answers to Join Questions') ?></h4>
+                                <div class="panel panel-default">
+                                    <div class="panel-body">
+                                        <?php 
+                                        // Remove duplicates based on question_id and answer_text
+                                        $uniqueAnswers = [];
+                                        $seen = [];
+                                        
+                                        foreach ($answers as $answer) {
+                                            $key = $answer->question_id . '_' . $answer->answer_text;
+                                            if (!isset($seen[$key])) {
+                                                $seen[$key] = true;
+                                                $uniqueAnswers[] = $answer;
+                                            }
+                                        }
+                                        
+                                        foreach ($uniqueAnswers as $answer): ?>
+                                            <div class="answer-item" style="margin-bottom: 20px;">
+                                                <strong><?= Html::encode($answer->question->question_text) ?></strong>
+                                                <?php if ($answer->question->is_required): ?>
+                                                    <span class="label label-danger"><?= Yii::t('SpaceJoinQuestionsModule.base', 'Required') ?></span>
+                                                <?php endif; ?>
 
-                    <!-- Show submitted answers -->
-                    <?= ApplicationAnswers::widget([
-                        'membership' => $membership,
-                        'answers' => $answers,
-                    ]) ?>
+                                                <div style="margin-top: 5px; padding: 10px; background-color: #f9f9f9; border-left: 3px solid #ddd;">
+                                                    <?= $answer->getFormattedAnswer() ?>
+                                                </div>
+
+                                                <small class="text-muted">
+                                                    <?= Yii::t('SpaceJoinQuestionsModule.base', 'Field Type: {type}', [
+                                                        'type' => $answer->question->getFieldTypeLabel()
+                                                    ]) ?>
+                                                </small>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <hr>
 

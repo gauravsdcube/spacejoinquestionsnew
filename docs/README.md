@@ -128,9 +128,6 @@ Choose one option from multiple choices displayed as radio buttons.
 - Requires options to be configured
 - One option per line in the options field
 
-### Checkbox
-Simple yes/no or agreement checkbox.
-
 ## Database Schema
 
 The module creates three main tables:
