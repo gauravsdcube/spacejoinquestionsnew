@@ -297,4 +297,89 @@ class Events
 
         $mail->send();
     }
+
+    /**
+     * Send application received confirmation email to applicant
+     */
+    public static function sendApplicationReceivedConfirmation($membership)
+    {
+        $space = $membership->space;
+        $user = $membership->user;
+        
+        // Get the application received confirmation template for this space
+        $template = \humhub\modules\spaceJoinQuestions\models\EmailTemplate::findBySpaceAndType(
+            $space->id,
+            \humhub\modules\spaceJoinQuestions\models\EmailTemplate::TYPE_APPLICATION_RECEIVED_CONFIRMATION
+        );
+        
+        
+        // If no custom template exists or template is not active, use the default template structure
+        if (!$template || !$template->is_active) {
+            $defaultTemplate = \humhub\modules\spaceJoinQuestions\models\EmailTemplate::getDefaultTemplate(
+                \humhub\modules\spaceJoinQuestions\models\EmailTemplate::TYPE_APPLICATION_RECEIVED_CONFIRMATION
+            );
+            
+            // Create a temporary template object with default values
+            $template = new \humhub\modules\spaceJoinQuestions\models\EmailTemplate();
+            $template->space_id = $space->id;
+            $template->template_type = \humhub\modules\spaceJoinQuestions\models\EmailTemplate::TYPE_APPLICATION_RECEIVED_CONFIRMATION;
+            $template->subject = $defaultTemplate['subject'];
+            $template->header = $defaultTemplate['header'];
+            $template->body = $defaultTemplate['body'];
+            $template->footer = $defaultTemplate['footer'];
+            $template->header_bg_color = $defaultTemplate['header_bg_color'];
+            $template->footer_bg_color = $defaultTemplate['footer_bg_color'];
+            $template->header_font_color = $defaultTemplate['header_font_color'];
+            $template->footer_font_color = $defaultTemplate['footer_font_color'];
+            $template->is_active = 1;
+            // Don't save this - it's just for processing
+        }
+        
+        // Prepare template variables (same as Application Received but for applicant)
+        $variables = [
+            'space_name' => $space->name,
+            'admin_name' => $space->getOwnerUser()->one()->displayName,
+            'user_name' => $user->displayName,
+            'user_email' => $user->email,
+            'application_date' => $membership->created_at,
+        ];
+
+        // Add application answers if available
+        $answers = \humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer::find()
+            ->where(['membership_id' => $membership->id])
+            ->with('question')
+            ->all();
+
+        if (!empty($answers)) {
+            $answersText = '';
+            foreach ($answers as $answer) {
+                $answersText .= "Q: " . $answer->question->question_text . "\n";
+                $answersText .= "A: " . $answer->answer_text . "\n\n";
+            }
+            $variables['application_answers'] = trim($answersText);
+        } else {
+            $variables['application_answers'] = Yii::t('SpaceJoinQuestionsModule.base', 'No answers provided.');
+        }
+        
+        // Process template with recipient user for proper file token generation
+        $processed = $template->processTemplate($variables, $user);
+        
+        
+        try {
+            // Send email to applicant
+            $mail = Yii::$app->mailer->compose()
+                ->setFrom([Yii::$app->settings->get('mailer.systemEmailAddress') => Yii::$app->settings->get('mailer.systemEmailName')])
+                ->setTo($user->email)
+                ->setSubject($processed['subject'])
+                ->setHtmlBody($processed['body']);
+            
+            $mail->send();
+            
+            Yii::info("Application received confirmation sent to {$user->email} for space {$space->name}", 'spaceJoinQuestions');
+            
+        } catch (\Exception $e) {
+            Yii::error("Failed to send application received confirmation to {$user->email}: " . $e->getMessage(), 'spaceJoinQuestions');
+        }
+    }
+
 }

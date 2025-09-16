@@ -3,7 +3,7 @@
     "name": "Space Join Questions",
     "description": "Allows space administrators to create custom questions for membership requests with approval workflow",
     "keywords": ["space", "membership", "questions", "approval", "workflow"],
-    "version": "2.1.0",
+    "version": "2.2.0",
     "humhub": {
         "minVersion": "1.15.0",
         "maxVersion": "1.17.*"

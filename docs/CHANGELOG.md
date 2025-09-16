@@ -5,6 +5,24 @@ All notable changes to the Space Join Questions module will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-01-16
+
+### ✨ Added
+- **Application Received Confirmation Email**: New email template for sending confirmation to applicants when their membership application is received
+- **Customizable Confirmation Template**: Full template customization support including header, body, footer, and color styling
+- **Template Management Integration**: Application Received Confirmation template integrated into the main email template management system
+
+### 🔧 Fixed
+- **Email Template Color Application**: Fixed custom font colors not being applied to plain text headers in email templates
+- **Template Lookup Issues**: Resolved template lookup problems that prevented custom templates from being used
+- **Template Validation**: Added missing template type validation for Application Received Confirmation
+- **Template Loading**: Fixed incomplete default template loading in EmailTemplateController
+
+### 🔧 Changed
+- **Enhanced Template Processing**: Improved template processing to properly handle custom styling and colors
+- **Better Template Management**: Application Received Confirmation template now shows proper status and management options
+- **Improved Email Rendering**: Enhanced email rendering to properly apply custom colors and styling
+
 ## [2.1.0] - 2025-01-15
 
 ### ✨ Added

@@ -26,6 +26,7 @@ use humhub\modules\space\models\Space;
 class EmailTemplate extends ActiveRecord
 {
     const TYPE_APPLICATION_RECEIVED = 'application_received';
+    const TYPE_APPLICATION_RECEIVED_CONFIRMATION = 'application_received_confirmation';
     const TYPE_APPLICATION_ACCEPTED = 'application_accepted';
     const TYPE_APPLICATION_DECLINED = 'application_declined';
 
@@ -67,6 +68,7 @@ class EmailTemplate extends ActiveRecord
             [['header_bg_color', 'footer_bg_color', 'header_font_color', 'footer_font_color'], 'string', 'max' => 7], // Hex color codes
             [['template_type'], 'in', 'range' => [
                 self::TYPE_APPLICATION_RECEIVED,
+                self::TYPE_APPLICATION_RECEIVED_CONFIRMATION,
                 self::TYPE_APPLICATION_ACCEPTED,
                 self::TYPE_APPLICATION_DECLINED
             ]],
@@ -112,6 +114,7 @@ class EmailTemplate extends ActiveRecord
     {
         return [
             self::TYPE_APPLICATION_RECEIVED => Yii::t('SpaceJoinQuestionsModule.base', 'Application Received'),
+            self::TYPE_APPLICATION_RECEIVED_CONFIRMATION => Yii::t('SpaceJoinQuestionsModule.base', 'Application Received Confirmation'),
             self::TYPE_APPLICATION_ACCEPTED => Yii::t('SpaceJoinQuestionsModule.base', 'Application Accepted'),
             self::TYPE_APPLICATION_DECLINED => Yii::t('SpaceJoinQuestionsModule.base', 'Application Declined'),
         ];
@@ -132,7 +135,7 @@ class EmailTemplate extends ActiveRecord
     public static function findBySpaceAndType($spaceId, $templateType)
     {
         return static::find()
-            ->where(['space_id' => $spaceId, 'template_type' => $templateType, 'is_active' => 1])
+            ->where(['space_id' => $spaceId, 'template_type' => $templateType])
             ->one();
     }
 
@@ -173,6 +176,16 @@ class EmailTemplate extends ActiveRecord
                 'header_bg_color' => '#f8d7da',
                 'footer_bg_color' => '#f8f9fa',
                 'header_font_color' => '#721c24',
+                'footer_font_color' => '#6c757d',
+            ],
+            self::TYPE_APPLICATION_RECEIVED_CONFIRMATION => [
+                'subject' => 'Application Received - {space_name}',
+                'header' => '<h2 style="color: #007bff; margin: 0;">{space_name}</h2><p style="margin: 5px 0 0 0; color: #6c757d;">Application Received</p>',
+                'body' => "Hello {user_name},\n\nThank you for your application to join {space_name}. We have received your application and will review it shortly.\n\n**Application Details:**\n- **Date:** {application_date}\n- **Space:** {space_name}\n- **Admin:** {admin_name}\n\n**Your Answers:**\n{application_answers}\n\nWe will notify you once we have reviewed your application. Please allow 2-3 business days for processing.\n\nBest regards,\n{admin_name}",
+                'footer' => '<p style="margin: 0;">This is an automated message from {space_name}</p><p style="margin: 5px 0 0 0; font-size: 11px;">If you have any questions, please contact the space administrator.</p>',
+                'header_bg_color' => '#e3f2fd',
+                'footer_bg_color' => '#f8f9fa',
+                'header_font_color' => '#0c5460',
                 'footer_font_color' => '#6c757d',
             ],
         ];
@@ -273,9 +286,6 @@ class EmailTemplate extends ActiveRecord
         $headerFontColor = $this->header_font_color ?: '#495057';
         $footerFontColor = $this->footer_font_color ?: '#6c757d';
         
-        // Debug: Log the colors being applied
-        \Yii::info('Header colors - BG: ' . $headerBgColor . ', Font: ' . $headerFontColor, 'spaceJoinQuestions');
-        \Yii::info('Header content: ' . substr($header, 0, 200), 'spaceJoinQuestions');
         
         // Apply custom colors directly to header content
         if (!empty($header)) {
@@ -322,7 +332,12 @@ class EmailTemplate extends ActiveRecord
      */
     protected function applyCustomColors($content, $fontColor)
     {
-        // Apply color to all text elements that don't already have a color
+        // If content is plain text (no HTML tags), wrap it in a div with the color
+        if (strpos($content, '<') === false) {
+            return '<div style="color: ' . htmlspecialchars($fontColor, ENT_QUOTES, 'UTF-8') . ';">' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '</div>';
+        }
+        
+        // If content has HTML tags, apply color to existing elements
         $content = preg_replace_callback('/<([^>]+)>/', function($matches) use ($fontColor) {
             $tag = $matches[1];
             

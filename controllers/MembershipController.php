@@ -121,10 +121,11 @@ class MembershipController extends SpaceController
 
                 $transaction->commit();
 
-                // Send email notification after transaction is committed
+                // Send email notification to admins after transaction is committed
                 \humhub\modules\spaceJoinQuestions\Events::notifyAdminsAboutNewApplication($membership);
 
-                // Send email notification after transaction is committed
+                // Send confirmation email to applicant after transaction is committed
+                \humhub\modules\spaceJoinQuestions\Events::sendApplicationReceivedConfirmation($membership);
 
                 if (Yii::$app->request->isAjax) {
                     Yii::$app->response->format = Response::FORMAT_JSON;
