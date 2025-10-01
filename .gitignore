@@ -1,0 +1,35 @@
+# Large files and backups
+*.sql
+*.tar.gz
+*.zip
+*.dump
+
+# Database dumps
+*-dump.sql
+*_backup_*.sql
+
+# Uploads and assets
+uploads/
+assets/
+
+# Runtime and cache
+protected/runtime/
+protected/vendor/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
