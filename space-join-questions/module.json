@@ -1,0 +1,25 @@
+{
+    "id": "space-join-questions",
+    "name": "Space Join Questions",
+    "description": "Allows space administrators to create custom questions for membership requests with approval workflow",
+    "keywords": ["space", "membership", "questions", "approval", "workflow"],
+    "version": "2.3.0",
+    "humhub": {
+        "minVersion": "1.15.0",
+        "maxVersion": "1.17.*"
+    },
+    "authors": [
+        {
+            "name": "D Cube Consulting Ltd",
+            "email": "info@dcubeconsulting.co.uk",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://dcubeconsulting.co.uk",
+    "license": "MIT",
+    "screenshots": [
+        "docs/screenshots/admin-questions.png",
+        "docs/screenshots/join-form.png",
+        "docs/screenshots/applications.png"
+    ]
+}

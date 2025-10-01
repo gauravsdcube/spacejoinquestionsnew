@@ -1,0 +1,63 @@
+/* Space Join Questions Module CSS */
+
+.space-join-questions {
+    margin: 20px 0;
+}
+
+.space-join-questions h4 {
+    color: #337ab7;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.answer-item {
+    border-left: 3px solid #337ab7;
+    padding-left: 15px;
+    margin-bottom: 15px;
+}
+
+.answer-item strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.application-answers .panel-body {
+    padding: 20px;
+}
+
+.space-join-questions .form-group label {
+    font-weight: 600;
+}
+
+.space-join-questions .help-block {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Question management */
+.question-list {
+    list-style: none;
+    padding: 0;
+}
+
+.question-item {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+    cursor: move;
+}
+
+.question-item:hover {
+    background: #f0f0f0;
+}
+
+.question-actions {
+    float: right;
+}
+
+.question-actions .btn {
+    margin-left: 5px;
+}
