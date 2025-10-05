@@ -5,6 +5,19 @@ All notable changes to the Space Join Questions module will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2025-01-21
+
+### 🔧 Fixed
+- **Email Link Rendering**: Fixed links not appearing in email templates by using the correct RichTextToEmailHtmlConverter
+- **Rich Text Editor Links**: Enabled link button in rich text editor for email template editing
+- **Email Template Processing**: Improved email template processing with proper token generation for secure file access
+- **Code Optimization**: Removed redundant file processing methods and debug logging
+
+### ✨ Improved
+- **Email Compatibility**: Better email client compatibility with proper link handling
+- **Template Editor**: Enhanced rich text editor functionality for email templates
+- **Code Quality**: Cleaned up redundant code and improved maintainability
+
 ## [2.2.0] - 2025-01-16
 
 ### ✨ Added

@@ -150,6 +150,11 @@ class Events
 
         // Email notification is now sent from the controller after answers are saved
         // to prevent race condition where answers are not available yet
+        
+        // Trigger AVID membership notification if applicable
+        if (Yii::$app->getModule('avid-membership-notifications')) {
+            \humhub\modules\avidMembershipNotifications\Events::onMembershipApplicationReceived($membership);
+        }
     }
 
     /**

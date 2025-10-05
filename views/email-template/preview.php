@@ -112,6 +112,27 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Email Template Preview')
                         </ul>
                     </div>
                 </div>
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h5><i class="fa fa-code"></i> <?= Yii::t('SpaceJoinQuestionsModule.base', 'Debug Information') ?></h5>
+                    </div>
+                    <div class="panel-body">
+                        <p><strong><?= Yii::t('SpaceJoinQuestionsModule.base', 'Raw HTML Content:') ?></strong></p>
+                        <pre style="font-size: 11px; background: #f5f5f5; padding: 10px; max-height: 200px; overflow-y: auto;"><?= Html::encode($processed['body']) ?></pre>
+                        
+                        <p><strong><?= Yii::t('SpaceJoinQuestionsModule.base', 'Link Count:') ?></strong> 
+                        <?php 
+                        $linkCount = substr_count($processed['body'], '<a ');
+                        echo $linkCount > 0 ? $linkCount . ' ' . Yii::t('SpaceJoinQuestionsModule.base', 'links found') : Yii::t('SpaceJoinQuestionsModule.base', 'No links found');
+                        ?>
+                        </p>
+                        
+                        <p><strong><?= Yii::t('SpaceJoinQuestionsModule.base', 'Visible Links in Preview:') ?></strong> 
+                        <span id="visible-link-count"><?= Yii::t('SpaceJoinQuestionsModule.base', 'Calculating...') ?></span>
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -145,4 +166,74 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Email Template Preview')
     border-radius: 4px;
     line-height: 1.6;
 }
+
+/* Ensure links are visible and properly styled in preview */
+.email-body a {
+    color: #dd0031 !important;
+    text-decoration: underline !important;
+    cursor: pointer;
+}
+
+.email-body a:hover {
+    color: #b30026 !important;
+    text-decoration: underline !important;
+}
+
+.email-body a:visited {
+    color: #8b0022 !important;
+}
+
+/* Ensure links in header and footer are also visible */
+.email-body a[href^="http"] {
+    color: #dd0031 !important;
+    text-decoration: underline !important;
+}
+
+/* Additional styling to ensure links are visible */
+.email-body a {
+    display: inline !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Force link styling even if overridden by other CSS */
+.email-body a:link {
+    color: #dd0031 !important;
+    text-decoration: underline !important;
+}
+
+.email-body a:active {
+    color: #ff0000 !important;
+}
+
+/* Ensure links are clickable */
+.email-body a {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
 </style>
+
+<script>
+$(document).ready(function() {
+    // Count visible links in the email preview
+    var visibleLinks = $('.email-body a').length;
+    $('#visible-link-count').text(visibleLinks + ' links visible');
+    
+    // Add click handlers to test links
+    $('.email-body a').on('click', function(e) {
+        e.preventDefault();
+        var url = $(this).attr('href');
+        alert('Link clicked: ' + url + '\n\nThis would open in a new tab in the actual email.');
+    });
+    
+    // Highlight links on hover for debugging
+    $('.email-body a').hover(
+        function() {
+            $(this).css('background-color', '#ffffcc');
+        },
+        function() {
+            $(this).css('background-color', '');
+        }
+    );
+});
+</script>

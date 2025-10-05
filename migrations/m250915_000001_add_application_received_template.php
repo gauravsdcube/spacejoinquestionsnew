@@ -51,3 +51,4 @@ class m250915_000001_add_application_received_template extends Migration
         $this->dropTable('space_join_application_received_template');
     }
 }
+

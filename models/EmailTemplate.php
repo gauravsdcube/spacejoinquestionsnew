@@ -262,12 +262,13 @@ class EmailTemplate extends ActiveRecord
 
         // Check if content contains HTML tags (but not markdown)
         if (strpos($content, '<') !== false && strpos($content, '>') !== false) {
-            // This is HTML content, return as-is (it's already formatted)
-            return $content;
+            // This is HTML content, process any plain URLs in it
+            return $this->processPlainUrls($content);
         }
 
-        // Otherwise, treat as plain text and convert to HTML
-        return nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8'));
+        // Otherwise, treat as plain text and convert to HTML, then process URLs
+        $htmlContent = nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8'));
+        return $this->processPlainUrls($htmlContent);
     }
 
     /**
@@ -377,41 +378,61 @@ class EmailTemplate extends ActiveRecord
      */
     protected function convertRichTextToHtml($content, $recipient = null, $isPreview = false)
     {
-        if ($isPreview) {
-            // For preview, manually process file-guid references first
-            $content = $this->processFileGuidReferences($content);
-            
-            // Debug: Log the content before conversion
-            \Yii::info('Preview content before conversion: ' . substr($content, 0, 500), 'spaceJoinQuestions');
-            
-            // Use standard HTML converter (should support tables by default)
-            $result = \humhub\modules\content\widgets\richtext\converter\RichTextToHtmlConverter::process($content, [
-                'minimal' => false,
-                'exclude' => ['mention', 'oembed'], // Exclude features that don't work well in emails
-            ]);
-            
-            // Remove color styles from the converted HTML to allow email template colors to take precedence
-            $result = $this->removeColorStyles($result);
-            
-            // Debug: Log the result after conversion
-            \Yii::info('Preview content after conversion: ' . substr($result, 0, 500), 'spaceJoinQuestions');
-            
-            return $result;
-        }
-        
-        // For actual emails, manually process file-guid references with tokens
-        if ($recipient) {
-            $content = $this->processFileGuidReferencesWithTokens($content, $recipient);
-        }
-        
-        // Then use regular HTML converter (without email converter since we manually processed tokens)
-        $result = \humhub\modules\content\widgets\richtext\converter\RichTextToHtmlConverter::process($content, [
+        // Use email-specific converter for proper link handling and token generation
+        $result = \humhub\modules\content\widgets\richtext\converter\RichTextToEmailHtmlConverter::process($content, [
             'minimal' => false,
             'exclude' => ['mention', 'oembed'], // Exclude features that don't work well in emails
+            \humhub\modules\content\widgets\richtext\converter\RichTextToEmailHtmlConverter::OPTION_RECEIVER_USER => $recipient, // Add receiver for proper token generation
         ]);
+        
+        // Process any remaining plain URLs that weren't converted to links
+        $result = $this->processPlainUrls($result);
         
         // Remove color styles from the converted HTML to allow email template colors to take precedence
         return $this->removeColorStyles($result);
+    }
+    
+    /**
+     * Process plain URLs in HTML content and convert them to clickable links
+     * 
+     * @param string $html
+     * @return string
+     */
+    protected function processPlainUrls($html)
+    {
+        // First, find all existing <a> tags and temporarily replace them
+        $existingLinks = [];
+        $html = preg_replace_callback('/<a[^>]*>.*?<\/a>/i', function($matches) use (&$existingLinks) {
+            $placeholder = '___EXISTING_LINK_' . count($existingLinks) . '___';
+            $existingLinks[] = $matches[0];
+            return $placeholder;
+        }, $html);
+        
+        // Now process URLs that are not in existing links
+        // Improved pattern to catch more URL formats
+        $pattern = '/\b(https?:\/\/[^\s<>"\'{}|\\^`\[\]]+)/i';
+        
+        $html = preg_replace_callback($pattern, function($matches) {
+            $url = $matches[1];
+            // Ensure URL is properly encoded
+            $encodedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+            return '<a href="' . $encodedUrl . '" target="_blank" rel="noopener noreferrer" style="color: #dd0031; text-decoration: underline;">' . $encodedUrl . '</a>';
+        }, $html);
+        
+        // Also handle URLs without protocol (www.example.com)
+        $wwwPattern = '/\b(www\.[^\s<>"\'{}|\\^`\[\]]+)/i';
+        $html = preg_replace_callback($wwwPattern, function($matches) {
+            $url = 'https://' . $matches[1];
+            $encodedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+            return '<a href="' . $encodedUrl . '" target="_blank" rel="noopener noreferrer" style="color: #dd0031; text-decoration: underline;">' . $encodedUrl . '</a>';
+        }, $html);
+        
+        // Restore existing links
+        foreach ($existingLinks as $index => $link) {
+            $html = str_replace('___EXISTING_LINK_' . $index . '___', $link, $html);
+        }
+        
+        return $html;
     }
     
     /**
@@ -422,10 +443,7 @@ class EmailTemplate extends ActiveRecord
      */
     protected function removeColorStyles($html)
     {
-        // Debug: Log the HTML before processing
-        \Yii::info('HTML before color removal: ' . substr($html, 0, 500), 'spaceJoinQuestions');
-        
-        // More precise regex to remove only color properties while preserving other styles
+        // Remove color-related properties while preserving other styles
         $html = preg_replace_callback('/style\s*=\s*["\']([^"\']*)["\']/i', function($matches) {
             $styles = $matches[1];
             
@@ -446,100 +464,31 @@ class EmailTemplate extends ActiveRecord
             return 'style="' . $styles . '"';
         }, $html);
         
-        // Debug: Log the HTML after processing
-        \Yii::info('HTML after color removal: ' . substr($html, 0, 500), 'spaceJoinQuestions');
+        // Ensure all links have the red color
+        $html = preg_replace_callback('/<a([^>]*)>/i', function($matches) {
+            $attributes = $matches[1];
+            
+            // Check if style attribute already exists
+            if (preg_match('/style\s*=\s*["\']([^"\']*)["\']/', $attributes, $styleMatches)) {
+                $styles = $styleMatches[1];
+                // Add or update color
+                if (preg_match('/color\s*:\s*[^;]+/', $styles)) {
+                    $styles = preg_replace('/color\s*:\s*[^;]+/', 'color: #dd0031', $styles);
+                } else {
+                    $styles .= '; color: #dd0031; text-decoration: underline;';
+                }
+                $attributes = preg_replace('/style\s*=\s*["\'][^"\']*["\']/', 'style="' . $styles . '"', $attributes);
+            } else {
+                // Add style attribute
+                $attributes .= ' style="color: #dd0031; text-decoration: underline;"';
+            }
+            
+            return '<a' . $attributes . '>';
+        }, $html);
         
         return $html;
     }
     
-    /**
-     * Process file-guid references and convert them to direct file URLs
-     * 
-     * @param string $content
-     * @return string
-     */
-    protected function processFileGuidReferences($content)
-    {
-        // Pattern to match file-guid references in markdown
-        $pattern = '/!\[([^\]]*)\]\(file-guid:([a-f0-9-]+)(?:\s+"([^"]*)")?\)/i';
-        
-        return preg_replace_callback($pattern, function($matches) {
-            $altText = $matches[1];
-            $guid = $matches[2];
-            $title = isset($matches[3]) ? $matches[3] : '';
-            
-            // Find the file by GUID
-            $file = \humhub\modules\file\models\File::findOne(['guid' => $guid]);
-            
-            if (!$file) {
-                // File not found, return original text
-                return $matches[0];
-            }
-            
-            // Create public copy for email access
-            $publicUrl = $this->createPublicImageCopy($file);
-            
-            // Build the HTML img tag
-            $html = '<img src="' . htmlspecialchars($publicUrl, ENT_QUOTES, 'UTF-8') . '"';
-            
-            if (!empty($altText)) {
-                $html .= ' alt="' . htmlspecialchars($altText, ENT_QUOTES, 'UTF-8') . '"';
-            }
-            
-            if (!empty($title)) {
-                $html .= ' title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"';
-            }
-            
-            $html .= '>';
-            
-            return $html;
-        }, $content);
-    }
-
-    /**
-     * Process file-guid references and convert them to direct file URLs with tokens for email recipients
-     * 
-     * @param string $content
-     * @param \humhub\modules\user\models\User $recipient
-     * @return string
-     */
-    protected function processFileGuidReferencesWithTokens($content, $recipient)
-    {
-        // Pattern to match file-guid references in markdown
-        $pattern = '/!\[([^\]]*)\]\(file-guid:([a-f0-9-]+)(?:\s+"([^"]*)")?\)/i';
-        
-        return preg_replace_callback($pattern, function($matches) use ($recipient) {
-            $altText = $matches[1];
-            $guid = $matches[2];
-            $title = isset($matches[3]) ? $matches[3] : '';
-            
-            // Find the file by GUID
-            $file = \humhub\modules\file\models\File::findOne(['guid' => $guid]);
-            
-            if (!$file) {
-                // File not found, return original text
-                return $matches[0];
-            }
-            
-            // Create public copy for email access
-            $publicUrl = $this->createPublicImageCopy($file);
-            
-            // Build the HTML img tag
-            $html = '<img src="' . htmlspecialchars($publicUrl, ENT_QUOTES, 'UTF-8') . '"';
-            
-            if (!empty($altText)) {
-                $html .= ' alt="' . htmlspecialchars($altText, ENT_QUOTES, 'UTF-8') . '"';
-            }
-            
-            if (!empty($title)) {
-                $html .= ' title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"';
-            }
-            
-            $html .= ' style="max-width: 100%;">';
-            
-            return $html;
-        }, $content);
-    }
 
     /**
      * Create a public copy of an image file for email access
