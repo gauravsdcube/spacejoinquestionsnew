@@ -26,6 +26,7 @@ use humhub\modules\space\models\Space;
 class EmailTemplate extends ActiveRecord
 {
     const TYPE_APPLICATION_RECEIVED = 'application_received';
+    const TYPE_APPLICATION_RECEIVED_CONFIRMATION = 'application_received_confirmation';
     const TYPE_APPLICATION_ACCEPTED = 'application_accepted';
     const TYPE_APPLICATION_DECLINED = 'application_declined';
 
@@ -67,6 +68,7 @@ class EmailTemplate extends ActiveRecord
             [['header_bg_color', 'footer_bg_color', 'header_font_color', 'footer_font_color'], 'string', 'max' => 7], // Hex color codes
             [['template_type'], 'in', 'range' => [
                 self::TYPE_APPLICATION_RECEIVED,
+                self::TYPE_APPLICATION_RECEIVED_CONFIRMATION,
                 self::TYPE_APPLICATION_ACCEPTED,
                 self::TYPE_APPLICATION_DECLINED
             ]],
@@ -112,6 +114,7 @@ class EmailTemplate extends ActiveRecord
     {
         return [
             self::TYPE_APPLICATION_RECEIVED => Yii::t('SpaceJoinQuestionsModule.base', 'Application Received'),
+            self::TYPE_APPLICATION_RECEIVED_CONFIRMATION => Yii::t('SpaceJoinQuestionsModule.base', 'Application Received Confirmation'),
             self::TYPE_APPLICATION_ACCEPTED => Yii::t('SpaceJoinQuestionsModule.base', 'Application Accepted'),
             self::TYPE_APPLICATION_DECLINED => Yii::t('SpaceJoinQuestionsModule.base', 'Application Declined'),
         ];
@@ -132,7 +135,7 @@ class EmailTemplate extends ActiveRecord
     public static function findBySpaceAndType($spaceId, $templateType)
     {
         return static::find()
-            ->where(['space_id' => $spaceId, 'template_type' => $templateType, 'is_active' => 1])
+            ->where(['space_id' => $spaceId, 'template_type' => $templateType])
             ->one();
     }
 
@@ -173,6 +176,16 @@ class EmailTemplate extends ActiveRecord
                 'header_bg_color' => '#f8d7da',
                 'footer_bg_color' => '#f8f9fa',
                 'header_font_color' => '#721c24',
+                'footer_font_color' => '#6c757d',
+            ],
+            self::TYPE_APPLICATION_RECEIVED_CONFIRMATION => [
+                'subject' => 'Application Received - {space_name}',
+                'header' => '<h2 style="color: #007bff; margin: 0;">{space_name}</h2><p style="margin: 5px 0 0 0; color: #6c757d;">Application Received</p>',
+                'body' => "Hello {user_name},\n\nThank you for your application to join {space_name}. We have received your application and will review it shortly.\n\n**Application Details:**\n- **Date:** {application_date}\n- **Space:** {space_name}\n- **Admin:** {admin_name}\n\n**Your Answers:**\n{application_answers}\n\nWe will notify you once we have reviewed your application. Please allow 2-3 business days for processing.\n\nBest regards,\n{admin_name}",
+                'footer' => '<p style="margin: 0;">This is an automated message from {space_name}</p><p style="margin: 5px 0 0 0; font-size: 11px;">If you have any questions, please contact the space administrator.</p>',
+                'header_bg_color' => '#e3f2fd',
+                'footer_bg_color' => '#f8f9fa',
+                'header_font_color' => '#0c5460',
                 'footer_font_color' => '#6c757d',
             ],
         ];
@@ -249,12 +262,13 @@ class EmailTemplate extends ActiveRecord
 
         // Check if content contains HTML tags (but not markdown)
         if (strpos($content, '<') !== false && strpos($content, '>') !== false) {
-            // This is HTML content, return as-is (it's already formatted)
-            return $content;
+            // This is HTML content, process any plain URLs in it
+            return $this->processPlainUrls($content);
         }
 
-        // Otherwise, treat as plain text and convert to HTML
-        return nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8'));
+        // Otherwise, treat as plain text and convert to HTML, then process URLs
+        $htmlContent = nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8'));
+        return $this->processPlainUrls($htmlContent);
     }
 
     /**
@@ -273,9 +287,6 @@ class EmailTemplate extends ActiveRecord
         $headerFontColor = $this->header_font_color ?: '#495057';
         $footerFontColor = $this->footer_font_color ?: '#6c757d';
         
-        // Debug: Log the colors being applied
-        \Yii::info('Header colors - BG: ' . $headerBgColor . ', Font: ' . $headerFontColor, 'spaceJoinQuestions');
-        \Yii::info('Header content: ' . substr($header, 0, 200), 'spaceJoinQuestions');
         
         // Apply custom colors directly to header content
         if (!empty($header)) {
@@ -322,7 +333,12 @@ class EmailTemplate extends ActiveRecord
      */
     protected function applyCustomColors($content, $fontColor)
     {
-        // Apply color to all text elements that don't already have a color
+        // If content is plain text (no HTML tags), wrap it in a div with the color
+        if (strpos($content, '<') === false) {
+            return '<div style="color: ' . htmlspecialchars($fontColor, ENT_QUOTES, 'UTF-8') . ';">' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '</div>';
+        }
+        
+        // If content has HTML tags, apply color to existing elements
         $content = preg_replace_callback('/<([^>]+)>/', function($matches) use ($fontColor) {
             $tag = $matches[1];
             
@@ -362,41 +378,61 @@ class EmailTemplate extends ActiveRecord
      */
     protected function convertRichTextToHtml($content, $recipient = null, $isPreview = false)
     {
-        if ($isPreview) {
-            // For preview, manually process file-guid references first
-            $content = $this->processFileGuidReferences($content);
-            
-            // Debug: Log the content before conversion
-            \Yii::info('Preview content before conversion: ' . substr($content, 0, 500), 'spaceJoinQuestions');
-            
-            // Use standard HTML converter (should support tables by default)
-            $result = \humhub\modules\content\widgets\richtext\converter\RichTextToHtmlConverter::process($content, [
-                'minimal' => false,
-                'exclude' => ['mention', 'oembed'], // Exclude features that don't work well in emails
-            ]);
-            
-            // Remove color styles from the converted HTML to allow email template colors to take precedence
-            $result = $this->removeColorStyles($result);
-            
-            // Debug: Log the result after conversion
-            \Yii::info('Preview content after conversion: ' . substr($result, 0, 500), 'spaceJoinQuestions');
-            
-            return $result;
-        }
-        
-        // For actual emails, manually process file-guid references with tokens
-        if ($recipient) {
-            $content = $this->processFileGuidReferencesWithTokens($content, $recipient);
-        }
-        
-        // Then use regular HTML converter (without email converter since we manually processed tokens)
-        $result = \humhub\modules\content\widgets\richtext\converter\RichTextToHtmlConverter::process($content, [
+        // Use email-specific converter for proper link handling and token generation
+        $result = \humhub\modules\content\widgets\richtext\converter\RichTextToEmailHtmlConverter::process($content, [
             'minimal' => false,
             'exclude' => ['mention', 'oembed'], // Exclude features that don't work well in emails
+            \humhub\modules\content\widgets\richtext\converter\RichTextToEmailHtmlConverter::OPTION_RECEIVER_USER => $recipient, // Add receiver for proper token generation
         ]);
+        
+        // Process any remaining plain URLs that weren't converted to links
+        $result = $this->processPlainUrls($result);
         
         // Remove color styles from the converted HTML to allow email template colors to take precedence
         return $this->removeColorStyles($result);
+    }
+    
+    /**
+     * Process plain URLs in HTML content and convert them to clickable links
+     * 
+     * @param string $html
+     * @return string
+     */
+    protected function processPlainUrls($html)
+    {
+        // First, find all existing <a> tags and temporarily replace them
+        $existingLinks = [];
+        $html = preg_replace_callback('/<a[^>]*>.*?<\/a>/i', function($matches) use (&$existingLinks) {
+            $placeholder = '___EXISTING_LINK_' . count($existingLinks) . '___';
+            $existingLinks[] = $matches[0];
+            return $placeholder;
+        }, $html);
+        
+        // Now process URLs that are not in existing links
+        // Improved pattern to catch more URL formats
+        $pattern = '/\b(https?:\/\/[^\s<>"\'{}|\\^`\[\]]+)/i';
+        
+        $html = preg_replace_callback($pattern, function($matches) {
+            $url = $matches[1];
+            // Ensure URL is properly encoded
+            $encodedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+            return '<a href="' . $encodedUrl . '" target="_blank" rel="noopener noreferrer" style="color: #dd0031; text-decoration: underline;">' . $encodedUrl . '</a>';
+        }, $html);
+        
+        // Also handle URLs without protocol (www.example.com)
+        $wwwPattern = '/\b(www\.[^\s<>"\'{}|\\^`\[\]]+)/i';
+        $html = preg_replace_callback($wwwPattern, function($matches) {
+            $url = 'https://' . $matches[1];
+            $encodedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+            return '<a href="' . $encodedUrl . '" target="_blank" rel="noopener noreferrer" style="color: #dd0031; text-decoration: underline;">' . $encodedUrl . '</a>';
+        }, $html);
+        
+        // Restore existing links
+        foreach ($existingLinks as $index => $link) {
+            $html = str_replace('___EXISTING_LINK_' . $index . '___', $link, $html);
+        }
+        
+        return $html;
     }
     
     /**
@@ -407,10 +443,7 @@ class EmailTemplate extends ActiveRecord
      */
     protected function removeColorStyles($html)
     {
-        // Debug: Log the HTML before processing
-        \Yii::info('HTML before color removal: ' . substr($html, 0, 500), 'spaceJoinQuestions');
-        
-        // More precise regex to remove only color properties while preserving other styles
+        // Remove color-related properties while preserving other styles
         $html = preg_replace_callback('/style\s*=\s*["\']([^"\']*)["\']/i', function($matches) {
             $styles = $matches[1];
             
@@ -431,100 +464,31 @@ class EmailTemplate extends ActiveRecord
             return 'style="' . $styles . '"';
         }, $html);
         
-        // Debug: Log the HTML after processing
-        \Yii::info('HTML after color removal: ' . substr($html, 0, 500), 'spaceJoinQuestions');
+        // Ensure all links have the red color
+        $html = preg_replace_callback('/<a([^>]*)>/i', function($matches) {
+            $attributes = $matches[1];
+            
+            // Check if style attribute already exists
+            if (preg_match('/style\s*=\s*["\']([^"\']*)["\']/', $attributes, $styleMatches)) {
+                $styles = $styleMatches[1];
+                // Add or update color
+                if (preg_match('/color\s*:\s*[^;]+/', $styles)) {
+                    $styles = preg_replace('/color\s*:\s*[^;]+/', 'color: #dd0031', $styles);
+                } else {
+                    $styles .= '; color: #dd0031; text-decoration: underline;';
+                }
+                $attributes = preg_replace('/style\s*=\s*["\'][^"\']*["\']/', 'style="' . $styles . '"', $attributes);
+            } else {
+                // Add style attribute
+                $attributes .= ' style="color: #dd0031; text-decoration: underline;"';
+            }
+            
+            return '<a' . $attributes . '>';
+        }, $html);
         
         return $html;
     }
     
-    /**
-     * Process file-guid references and convert them to direct file URLs
-     * 
-     * @param string $content
-     * @return string
-     */
-    protected function processFileGuidReferences($content)
-    {
-        // Pattern to match file-guid references in markdown
-        $pattern = '/!\[([^\]]*)\]\(file-guid:([a-f0-9-]+)(?:\s+"([^"]*)")?\)/i';
-        
-        return preg_replace_callback($pattern, function($matches) {
-            $altText = $matches[1];
-            $guid = $matches[2];
-            $title = isset($matches[3]) ? $matches[3] : '';
-            
-            // Find the file by GUID
-            $file = \humhub\modules\file\models\File::findOne(['guid' => $guid]);
-            
-            if (!$file) {
-                // File not found, return original text
-                return $matches[0];
-            }
-            
-            // Create public copy for email access
-            $publicUrl = $this->createPublicImageCopy($file);
-            
-            // Build the HTML img tag
-            $html = '<img src="' . htmlspecialchars($publicUrl, ENT_QUOTES, 'UTF-8') . '"';
-            
-            if (!empty($altText)) {
-                $html .= ' alt="' . htmlspecialchars($altText, ENT_QUOTES, 'UTF-8') . '"';
-            }
-            
-            if (!empty($title)) {
-                $html .= ' title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"';
-            }
-            
-            $html .= '>';
-            
-            return $html;
-        }, $content);
-    }
-
-    /**
-     * Process file-guid references and convert them to direct file URLs with tokens for email recipients
-     * 
-     * @param string $content
-     * @param \humhub\modules\user\models\User $recipient
-     * @return string
-     */
-    protected function processFileGuidReferencesWithTokens($content, $recipient)
-    {
-        // Pattern to match file-guid references in markdown
-        $pattern = '/!\[([^\]]*)\]\(file-guid:([a-f0-9-]+)(?:\s+"([^"]*)")?\)/i';
-        
-        return preg_replace_callback($pattern, function($matches) use ($recipient) {
-            $altText = $matches[1];
-            $guid = $matches[2];
-            $title = isset($matches[3]) ? $matches[3] : '';
-            
-            // Find the file by GUID
-            $file = \humhub\modules\file\models\File::findOne(['guid' => $guid]);
-            
-            if (!$file) {
-                // File not found, return original text
-                return $matches[0];
-            }
-            
-            // Create public copy for email access
-            $publicUrl = $this->createPublicImageCopy($file);
-            
-            // Build the HTML img tag
-            $html = '<img src="' . htmlspecialchars($publicUrl, ENT_QUOTES, 'UTF-8') . '"';
-            
-            if (!empty($altText)) {
-                $html .= ' alt="' . htmlspecialchars($altText, ENT_QUOTES, 'UTF-8') . '"';
-            }
-            
-            if (!empty($title)) {
-                $html .= ' title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"';
-            }
-            
-            $html .= ' style="max-width: 100%;">';
-            
-            return $html;
-        }, $content);
-    }
 
     /**
      * Create a public copy of an image file for email access

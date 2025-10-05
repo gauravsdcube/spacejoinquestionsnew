@@ -85,7 +85,13 @@ class EmailTemplateController extends SpaceController
             // Load default template
             $default = EmailTemplate::getDefaultTemplate($type);
             $template->subject = $default['subject'];
+            $template->header = $default['header'];
             $template->body = $default['body'];
+            $template->footer = $default['footer'];
+            $template->header_bg_color = $default['header_bg_color'];
+            $template->footer_bg_color = $default['footer_bg_color'];
+            $template->header_font_color = $default['header_font_color'];
+            $template->footer_font_color = $default['footer_font_color'];
         }
 
         if ($template->load(Yii::$app->request->post()) && $template->save()) {
@@ -157,7 +163,13 @@ class EmailTemplateController extends SpaceController
             $template->space_id = $space->id;
             $template->template_type = $type;
             $template->subject = $default['subject'];
+            $template->header = $default['header'];
             $template->body = $default['body'];
+            $template->footer = $default['footer'];
+            $template->header_bg_color = $default['header_bg_color'];
+            $template->footer_bg_color = $default['footer_bg_color'];
+            $template->header_font_color = $default['header_font_color'];
+            $template->footer_font_color = $default['footer_font_color'];
             $template->is_active = 1;
         } else {
             $template->is_active = !$template->is_active;
@@ -185,7 +197,13 @@ class EmailTemplateController extends SpaceController
         if ($template) {
             $default = EmailTemplate::getDefaultTemplate($type);
             $template->subject = $default['subject'];
+            $template->header = $default['header'];
             $template->body = $default['body'];
+            $template->footer = $default['footer'];
+            $template->header_bg_color = $default['header_bg_color'];
+            $template->footer_bg_color = $default['footer_bg_color'];
+            $template->header_font_color = $default['header_font_color'];
+            $template->footer_font_color = $default['footer_font_color'];
             
             if ($template->save()) {
                 Yii::$app->session->setFlash('success', Yii::t('SpaceJoinQuestionsModule.base', 'Email template reset to default.'));

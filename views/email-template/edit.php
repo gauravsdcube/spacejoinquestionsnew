@@ -41,6 +41,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <?= $form->field($template, 'header')->widget(RichTextField::class, [
                             'id' => 'email_template_header_' . $template->template_type,
                             'layout' => RichTextField::LAYOUT_BLOCK,
+                            'preset' => 'full', // Enable full functionality including links
                             'pluginOptions' => ['maxHeight' => '200px'],
                             'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email header here... (optional)'),
                             'focus' => false,
@@ -88,6 +89,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <?= $form->field($template, 'body')->widget(RichTextField::class, [
                     'id' => 'email_template_body_' . $template->template_type,
                     'layout' => RichTextField::LAYOUT_BLOCK,
+                    'preset' => 'full', // Enable full functionality including links
                     'pluginOptions' => ['maxHeight' => '400px'],
                     'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email content here...'),
                     'focus' => false,
@@ -105,6 +107,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <?= $form->field($template, 'footer')->widget(RichTextField::class, [
                             'id' => 'email_template_footer_' . $template->template_type,
                             'layout' => RichTextField::LAYOUT_BLOCK,
+                            'preset' => 'full', // Enable full functionality including links
                             'pluginOptions' => ['maxHeight' => '200px'],
                             'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email footer here... (optional)'),
                             'focus' => false,

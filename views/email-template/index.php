@@ -15,6 +15,8 @@ function getTemplateDescription($type) {
     switch ($type) {
         case EmailTemplate::TYPE_APPLICATION_RECEIVED:
             return Yii::t('SpaceJoinQuestionsModule.base', 'a new application is received (sent to admins)');
+        case EmailTemplate::TYPE_APPLICATION_RECEIVED_CONFIRMATION:
+            return Yii::t('SpaceJoinQuestionsModule.base', 'application is submitted (sent to applicant)');
         case EmailTemplate::TYPE_APPLICATION_ACCEPTED:
             return Yii::t('SpaceJoinQuestionsModule.base', 'an application is accepted (sent to user)');
         case EmailTemplate::TYPE_APPLICATION_DECLINED:

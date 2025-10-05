@@ -4,7 +4,7 @@ A production-ready HumHub module that adds a comprehensive space membership appl
 
 **Copyright © 2025 D Cube Consulting Ltd. All rights reserved.**
 
-## 🚀 Version: 2.0.1 (Production Ready)
+## 🚀 Version: 2.3.1 (Production Ready)
 
 ### Overview
 
@@ -28,6 +28,10 @@ This module enhances HumHub's space functionality by adding a formal application
 - **Formatting Options**: Bold, italic, lists, links, and other rich text features
 - **Variable Substitution**: Dynamic content replacement for personalized emails
 - **Live Preview**: Real-time preview of email templates with sample data
+- **Automatic Link Processing**: Plain text URLs automatically converted to clickable links
+- **Custom Link Styling**: Red link color (#dd0031) for better visibility and branding
+- **Link Protection**: Prevents double-processing of existing links
+- **Debug Tools**: Interactive link testing and debugging in preview mode
 
 ### Email Template Features
 - **Three Template Types**:
@@ -331,6 +335,24 @@ The module creates the following database tables:
 - Verify controller file permissions
 - Clear browser cache and HumHub cache
 
+#### 8. Links Not Visible in Email Templates
+**Symptoms**: Links appear as plain text instead of clickable links
+**Solutions**:
+- Check if URLs are properly formatted (include http:// or https://)
+- Verify that the link processing is working in preview mode
+- Check browser console for JavaScript errors
+- Ensure email client supports HTML links
+- Test with different email clients (Gmail, Outlook, etc.)
+
+#### 9. Links Not Clickable in Preview
+**Symptoms**: Links in email template preview are not clickable
+**Solutions**:
+- Check if links have proper HTML anchor tags
+- Verify CSS styling is not hiding links
+- Test with different browsers
+- Check if JavaScript is enabled
+- Use the debug panel to verify link count
+
 ### Debug Mode
 
 Enable debug mode to see detailed error messages:
@@ -403,6 +425,13 @@ Enable debug mode to see detailed error messages:
 - [ ] Users can see their application status
 - [ ] Template preview shows correct formatting
 - [ ] File handling works with secure tokens
+- [ ] Links are properly converted from plain text URLs
+- [ ] Links appear in red color (#dd0031) in preview and emails
+- [ ] Debug panel shows correct link count
+- [ ] Interactive link testing works in preview
+- [ ] Hover effects work on links in preview
+- [ ] Both HTTP and www URLs are processed correctly
+- [ ] Existing links are not double-processed
 
 ### Automated Testing
 
@@ -412,6 +441,20 @@ php protected/vendor/bin/codecept run --config protected/tests/codeception.yml u
 ```
 
 ## 📝 Changelog
+
+### Version 2.3.1 (Link Rendering Fix)
+- ✅ **Fixed**: Link rendering issues in email templates and previews
+- ✅ **Added**: Automatic URL-to-link conversion for plain text URLs
+- ✅ **Added**: Support for both HTTP/HTTPS and www URLs
+- ✅ **Added**: Custom link color (#dd0031) for better visibility
+- ✅ **Added**: Enhanced link processing with existing link protection
+- ✅ **Added**: Debug information panel in email template preview
+- ✅ **Added**: Interactive link testing in preview mode
+- ✅ **Added**: Hover effects for better link identification
+- ✅ **Improved**: Email template link visibility and functionality
+- ✅ **Enhanced**: Preview experience with comprehensive link styling
+- ✅ **Fixed**: Regex compilation errors in URL processing
+- ✅ **Added**: Inline CSS styling for email client compatibility
 
 ### Version 2.0.0 (Production Ready)
 - ✅ **Added**: Advanced rich text editor for email templates
