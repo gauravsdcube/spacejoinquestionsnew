@@ -1,0 +1,99 @@
+--- EmailTemplate.php.original	2025-01-01 13:30:00.000000000 +0000
++++ EmailTemplate.php	2025-01-01 13:30:00.000000000 +0000
+@@ -375,7 +375,7 @@
+     protected function convertRichTextToHtml($content, $recipient = null, $isPreview = false)
+     {
+         if ($isPreview) {
+-            // For preview, manually process file-guid references first
++            // For preview, manually process file-guid references first
+             $content = $this->processFileGuidReferences($content);
+             
+             // Debug: Log the content before conversion
+@@ -383,7 +383,9 @@
+             
+             // Use standard HTML converter (should support tables by default)
+             $result = \humhub\modules\content\widgets\richtext\converter\RichTextToHtmlConverter::process($content, [
+                 'minimal' => false,
+-                'exclude' => ['mention', 'oembed'], // Exclude features that don't work well in emails
++                'exclude' => ['mention', 'oembed'], // Exclude features that don't work well in emails
++                'linkTarget' => '_blank', // Ensure links have proper target
++                'prevLinkTarget' => false, // Don't remove link targets
+             ]);
+             
+             // Remove color styles from the converted HTML to allow email template colors to take precedence
+@@ -400,7 +402,9 @@
+         // Then use regular HTML converter (without email converter since we manually processed tokens)
+         $result = \humhub\modules\content\widgets\richtext\converter\RichTextToHtmlConverter::process($content, [
+             'minimal' => false,
+-            'exclude' => ['mention', 'oembed'], // Exclude features that don't work well in emails
++            'exclude' => ['mention', 'oembed'], // Exclude features that don't work well in emails
++            'linkTarget' => '_blank', // Ensure links have proper target
++            'prevLinkTarget' => false, // Don't remove link targets
+         ]);
+         
+         // Remove color styles from the converted HTML to allow email template colors to take precedence
+@@ -420,6 +424,35 @@
+         return $this->removeColorStyles($result);
+     }
+     
++    /**
++     * Preserve and enhance links in HTML content
++     * 
++     * @param string $html
++     * @return string
++     */
++    protected function preserveLinks($html)
++    {
++        // Ensure links are properly formatted and not stripped
++        $html = preg_replace_callback('/<a\s+([^>]*?)>([^<]*?)<\/a>/i', function($matches) {
++            $attributes = $matches[1];
++            $text = $matches[2];
++            
++            // Ensure href is preserved
++            if (strpos($attributes, 'href=') === false) {
++                return $matches[0]; // Return original if no href
++            }
++            
++            // Ensure target="_blank" for external links
++            if (strpos($attributes, 'target=') === false) {
++                $attributes .= ' target="_blank"';
++            }
++            
++            // Add rel="noopener" for security
++            if (strpos($attributes, 'rel=') === false) {
++                $attributes .= ' rel="noopener"';
++            }
++            
++            return '<a ' . $attributes . '>' . $text . '</a>';
++        }, $html);
++        
++        return $html;
++    }
++    
+     /**
+      * Remove color styles from HTML to allow email template colors to take precedence
+      * 
+@@ -430,7 +463,7 @@
+     {
+         // Debug: Log the HTML before processing
+         \Yii::info('HTML before color removal: ' . substr($html, 0, 500), 'spaceJoinQuestions');
+         
+-        // More precise regex to remove only color properties while preserving other styles
++        // More precise regex to remove only color properties while preserving link styles
+         $html = preg_replace_callback('/style\s*=\s*["\']([^"\']*)["\']/i', function($matches) {
+             $styles = $matches[1];
+             
+@@ -438,6 +471,12 @@
+             $styles = preg_replace('/color\s*:\s*[^;]+;?\s*/i', '', $styles);
+             $styles = preg_replace('/background-color\s*:\s*[^;]+;?\s*/i', '', $styles);
+             
++            // Check if this is a link element - preserve link styles
++            $beforeMatch = substr($html, 0, strpos($html, $matches[0]));
++            if (preg_match('/<a[^>]*$/i', $beforeMatch)) {
++                // This is a link, preserve all styles including colors
++                return $matches[0];
++            }
++            
+             // Clean up any double semicolons or leading/trailing semicolons
+             $styles = preg_replace('/;\s*;/', ';', $styles);
+             $styles = preg_replace('/^;\s*/', '', $styles);
