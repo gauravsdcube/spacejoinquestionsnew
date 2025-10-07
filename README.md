@@ -4,7 +4,7 @@ A production-ready HumHub module that adds a comprehensive space membership appl
 
 **Copyright © 2025 D Cube Consulting Ltd. All rights reserved.**
 
-## 🚀 Version: 2.3.1 (Production Ready)
+## 🚀 Version: 2.4.0 (Production Ready)
 
 ### Overview
 
@@ -19,19 +19,25 @@ This module enhances HumHub's space functionality by adding a formal application
 - **Personalized Content**: Emails include recipient's first name and custom decline reasons
 - **Professional Email Design**: Clean, branded emails without marketing elements
 
-### 🎨 Rich Text Email Editor
-- **Advanced Rich Text Editing**: Full-featured rich text editor for email templates
-- **Header & Footer Customization**: Separate rich text editors for email headers and footers
+### 🎨 TinyMCE Email Editor
+- **Professional TinyMCE Editor**: Full-featured TinyMCE editor optimized for email templates
+- **Email-Specific Toolbar**: Customized toolbar with email editing tools
+- **Header & Footer Customization**: Separate TinyMCE editors for email headers and footers
 - **Color Customization**: Custom background and font colors for headers and footers
-- **Image Support**: Upload and embed images directly in email templates
-- **Table Support**: Create and edit tables within email content
-- **Formatting Options**: Bold, italic, lists, links, and other rich text features
+- **Advanced Image Support**: Upload and embed images with automatic public URL generation
+- **Table Support**: Create and edit tables with email-optimized styling
+- **Link Management**: Advanced link handling with automatic URL detection and formatting
+- **Email Link Button**: Special button for inserting mailto links
+- **Code View**: HTML source code editing for advanced users
 - **Variable Substitution**: Dynamic content replacement for personalized emails
 - **Live Preview**: Real-time preview of email templates with sample data
 - **Automatic Link Processing**: Plain text URLs automatically converted to clickable links
 - **Custom Link Styling**: Red link color (#dd0031) for better visibility and branding
 - **Link Protection**: Prevents double-processing of existing links
 - **Debug Tools**: Interactive link testing and debugging in preview mode
+- **Email Templates**: Built-in email template support
+- **Paste Handling**: Smart paste handling for email content
+- **Fullscreen Editing**: Full-screen mode for better editing experience
 
 ### Email Template Features
 - **Three Template Types**:
@@ -441,6 +447,20 @@ php protected/vendor/bin/codecept run --config protected/tests/codeception.yml u
 ```
 
 ## 📝 Changelog
+
+### Version 2.4.0 (TinyMCE Integration)
+- ✅ **Added**: Professional TinyMCE editor for email templates
+- ✅ **Added**: Email-optimized TinyMCE configuration with custom toolbar
+- ✅ **Added**: Advanced image upload with public URL generation
+- ✅ **Added**: Email-specific link handling and formatting
+- ✅ **Added**: Special email link button for mailto links
+- ✅ **Added**: Code view for HTML source editing
+- ✅ **Added**: Smart paste handling for email content
+- ✅ **Added**: Fullscreen editing mode
+- ✅ **Added**: Upload controller for image handling
+- ✅ **Enhanced**: Link processing with TinyMCE HTML output
+- ✅ **Improved**: Email template editing experience
+- ✅ **Added**: Comprehensive TinyMCE testing tools
 
 ### Version 2.3.1 (Link Rendering Fix)
 - ✅ **Fixed**: Link rendering issues in email templates and previews

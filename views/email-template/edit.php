@@ -2,6 +2,7 @@
 
 use humhub\libs\Html;
 use humhub\modules\content\widgets\richtext\RichTextField;
+use humhub\modules\spaceJoinQuestions\widgets\EmailTinyMce;
 use humhub\modules\ui\view\components\View;
 use yii\widgets\ActiveForm;
 
@@ -38,13 +39,15 @@ $this->params['breadcrumbs'][] = $this->title;
 
                 <div class="row">
                     <div class="col-md-6">
-                        <?= $form->field($template, 'header')->widget(RichTextField::class, [
-                            'id' => 'email_template_header_' . $template->template_type,
-                            'layout' => RichTextField::LAYOUT_BLOCK,
-                            'preset' => 'full', // Enable full functionality including links
-                            'pluginOptions' => ['maxHeight' => '200px'],
-                            'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email header here... (optional)'),
-                            'focus' => false,
+                        <?= $form->field($template, 'header')->widget(EmailTinyMce::class, [
+                            'options' => [
+                                'id' => 'email_template_header_' . $template->template_type,
+                                'rows' => 6,
+                            ],
+                            'clientOptions' => [
+                                'height' => 200,
+                                'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email header here... (optional)'),
+                            ]
                         ])->label(false) ?>
                     </div>
                     <div class="col-md-6">
@@ -86,13 +89,15 @@ $this->params['breadcrumbs'][] = $this->title;
                 <h5><?= Yii::t('SpaceJoinQuestionsModule.base', 'Email Body') ?></h5>
                 <p class="help-block"><?= Yii::t('SpaceJoinQuestionsModule.base', 'This is the main content of your email. Use the rich text editor to format text, add images, tables, and more.') ?></p>
 
-                <?= $form->field($template, 'body')->widget(RichTextField::class, [
-                    'id' => 'email_template_body_' . $template->template_type,
-                    'layout' => RichTextField::LAYOUT_BLOCK,
-                    'preset' => 'full', // Enable full functionality including links
-                    'pluginOptions' => ['maxHeight' => '400px'],
-                    'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email content here...'),
-                    'focus' => false,
+                <?= $form->field($template, 'body')->widget(EmailTinyMce::class, [
+                    'options' => [
+                        'id' => 'email_template_body_' . $template->template_type,
+                        'rows' => 15,
+                    ],
+                    'clientOptions' => [
+                        'height' => 400,
+                        'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email content here...'),
+                    ]
                 ])->label(false) ?>
             </div>
         </div>
@@ -104,13 +109,15 @@ $this->params['breadcrumbs'][] = $this->title;
 
                 <div class="row">
                     <div class="col-md-6">
-                        <?= $form->field($template, 'footer')->widget(RichTextField::class, [
-                            'id' => 'email_template_footer_' . $template->template_type,
-                            'layout' => RichTextField::LAYOUT_BLOCK,
-                            'preset' => 'full', // Enable full functionality including links
-                            'pluginOptions' => ['maxHeight' => '200px'],
-                            'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email footer here... (optional)'),
-                            'focus' => false,
+                        <?= $form->field($template, 'footer')->widget(EmailTinyMce::class, [
+                            'options' => [
+                                'id' => 'email_template_footer_' . $template->template_type,
+                                'rows' => 6,
+                            ],
+                            'clientOptions' => [
+                                'height' => 200,
+                                'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email footer here... (optional)'),
+                            ]
                         ])->label(false) ?>
                     </div>
                     <div class="col-md-6">

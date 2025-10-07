@@ -378,7 +378,18 @@ class EmailTemplate extends ActiveRecord
      */
     protected function convertRichTextToHtml($content, $recipient = null, $isPreview = false)
     {
-        // Use email-specific converter for proper link handling and token generation
+        // Check if content is already HTML (from TinyMCE)
+        if (strpos($content, '<') !== false && strpos($content, '>') !== false) {
+            // Content is already HTML from TinyMCE, just process any remaining plain URLs
+            $result = $this->processPlainUrls($content);
+            
+            // Ensure all links have the red color
+            $result = $this->ensureLinkColors($result);
+            
+            return $result;
+        }
+        
+        // Fallback to rich text converter for markdown content
         $result = \humhub\modules\content\widgets\richtext\converter\RichTextToEmailHtmlConverter::process($content, [
             'minimal' => false,
             'exclude' => ['mention', 'oembed'], // Exclude features that don't work well in emails
@@ -388,8 +399,10 @@ class EmailTemplate extends ActiveRecord
         // Process any remaining plain URLs that weren't converted to links
         $result = $this->processPlainUrls($result);
         
-        // Remove color styles from the converted HTML to allow email template colors to take precedence
-        return $this->removeColorStyles($result);
+        // Ensure all links have the red color
+        $result = $this->ensureLinkColors($result);
+        
+        return $result;
     }
     
     /**
@@ -431,6 +444,39 @@ class EmailTemplate extends ActiveRecord
         foreach ($existingLinks as $index => $link) {
             $html = str_replace('___EXISTING_LINK_' . $index . '___', $link, $html);
         }
+        
+        return $html;
+    }
+    
+    /**
+     * Ensure all links have the red color (#dd0031)
+     * 
+     * @param string $html
+     * @return string
+     */
+    protected function ensureLinkColors($html)
+    {
+        // Process all <a> tags to ensure they have the red color
+        $html = preg_replace_callback('/<a([^>]*)>/i', function($matches) {
+            $attributes = $matches[1];
+            
+            // Check if style attribute already exists
+            if (preg_match('/style\s*=\s*["\']([^"\']*)["\']/', $attributes, $styleMatches)) {
+                $styles = $styleMatches[1];
+                // Add or update color
+                if (preg_match('/color\s*:\s*[^;]+/', $styles)) {
+                    $styles = preg_replace('/color\s*:\s*[^;]+/', 'color: #dd0031', $styles);
+                } else {
+                    $styles .= '; color: #dd0031; text-decoration: underline;';
+                }
+                $attributes = preg_replace('/style\s*=\s*["\'][^"\']*["\']/', 'style="' . $styles . '"', $attributes);
+            } else {
+                // Add style attribute with red color
+                $attributes .= ' style="color: #dd0031; text-decoration: underline;"';
+            }
+            
+            return '<a' . $attributes . '>';
+        }, $html);
         
         return $html;
     }

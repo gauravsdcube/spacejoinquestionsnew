@@ -15,6 +15,7 @@ return [
         '<spaceContainer>/membership' => 'space-join-questions/membership/index',
         '<spaceContainer>/admin/approve' => 'space-join-questions/admin/approve',
         '<spaceContainer>/admin/decline' => 'space-join-questions/admin/decline',
+        '<spaceContainer>/upload/image' => 'space-join-questions/upload/image',
     ],
     'events' => [
         [
