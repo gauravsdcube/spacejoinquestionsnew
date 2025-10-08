@@ -2,7 +2,6 @@
 
 use humhub\libs\Html;
 use humhub\modules\content\widgets\richtext\RichTextField;
-use humhub\modules\spaceJoinQuestions\widgets\EmailTinyMce;
 use humhub\modules\ui\view\components\View;
 use yii\widgets\ActiveForm;
 
@@ -39,15 +38,14 @@ $this->params['breadcrumbs'][] = $this->title;
 
                 <div class="row">
                     <div class="col-md-6">
-                        <?= $form->field($template, 'header')->widget(EmailTinyMce::class, [
-                            'options' => [
-                                'id' => 'email_template_header_' . $template->template_type,
-                                'rows' => 6,
-                            ],
-                            'clientOptions' => [
-                                'height' => 200,
-                                'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email header here... (optional)'),
-                            ]
+                        <?= $form->field($template, 'header')->widget(RichTextField::class, [
+                            'id' => 'email_template_header_' . $space->id . '_' . $template->id . '_' . $template->template_type,
+                            'layout' => RichTextField::LAYOUT_BLOCK,
+                            'preset' => 'full', // Enable full functionality including links
+                            'pluginOptions' => ['maxHeight' => '200px'],
+                            'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email header here... (optional)'),
+                            'focus' => false,
+                            'backupInterval' => 0
                         ])->label(false) ?>
                     </div>
                     <div class="col-md-6">
@@ -89,15 +87,14 @@ $this->params['breadcrumbs'][] = $this->title;
                 <h5><?= Yii::t('SpaceJoinQuestionsModule.base', 'Email Body') ?></h5>
                 <p class="help-block"><?= Yii::t('SpaceJoinQuestionsModule.base', 'This is the main content of your email. Use the rich text editor to format text, add images, tables, and more.') ?></p>
 
-                <?= $form->field($template, 'body')->widget(EmailTinyMce::class, [
-                    'options' => [
-                        'id' => 'email_template_body_' . $template->template_type,
-                        'rows' => 15,
-                    ],
-                    'clientOptions' => [
-                        'height' => 400,
-                        'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email content here...'),
-                    ]
+                <?= $form->field($template, 'body')->widget(RichTextField::class, [
+                    'id' => 'email_template_body_' . $space->id . '_' . $template->id . '_' . $template->template_type,
+                    'layout' => RichTextField::LAYOUT_BLOCK,
+                    'preset' => 'full', // Enable full functionality including links
+                    'pluginOptions' => ['maxHeight' => '400px'],
+                    'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email content here...'),
+                    'focus' => false,
+                    'backupInterval' => 0
                 ])->label(false) ?>
             </div>
         </div>
@@ -109,15 +106,14 @@ $this->params['breadcrumbs'][] = $this->title;
 
                 <div class="row">
                     <div class="col-md-6">
-                        <?= $form->field($template, 'footer')->widget(EmailTinyMce::class, [
-                            'options' => [
-                                'id' => 'email_template_footer_' . $template->template_type,
-                                'rows' => 6,
-                            ],
-                            'clientOptions' => [
-                                'height' => 200,
-                                'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email footer here... (optional)'),
-                            ]
+                        <?= $form->field($template, 'footer')->widget(RichTextField::class, [
+                            'id' => 'email_template_footer_' . $space->id . '_' . $template->id . '_' . $template->template_type,
+                            'layout' => RichTextField::LAYOUT_BLOCK,
+                            'preset' => 'full', // Enable full functionality including links
+                            'pluginOptions' => ['maxHeight' => '200px'],
+                            'placeholder' => Yii::t('SpaceJoinQuestionsModule.base', 'Enter your email footer here... (optional)'),
+                            'focus' => false,
+                            'backupInterval' => 0
                         ])->label(false) ?>
                     </div>
                     <div class="col-md-6">
@@ -331,6 +327,28 @@ $(document).ready(function() {
     $('input[type="color"]').each(function() {
         var hexInput = $(this).siblings('input[type="text"]');
         hexInput.val($(this).val());
+    });
+    
+    // Clear any existing backup data for this template to prevent content copying
+    const spaceId = <?= $space->id ?>;
+    const templateId = <?= $template->id ?>;
+    const templateType = '<?= $template->template_type ?>';
+    
+    // Clear any existing backup data for this specific template
+    if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('email_template_header_' + spaceId + '_' + templateId + '_' + templateType);
+        sessionStorage.removeItem('email_template_body_' + spaceId + '_' + templateId + '_' + templateType);
+        sessionStorage.removeItem('email_template_footer_' + spaceId + '_' + templateId + '_' + templateType);
+    }
+    
+    // Clear backup data for other template types to prevent cross-contamination
+    const templateTypes = ['application_received', 'application_received_confirmation', 'application_accepted', 'application_declined'];
+    templateTypes.forEach(function(type) {
+        if (type !== templateType) {
+            sessionStorage.removeItem('email_template_header_' + spaceId + '_' + templateId + '_' + type);
+            sessionStorage.removeItem('email_template_body_' + spaceId + '_' + templateId + '_' + type);
+            sessionStorage.removeItem('email_template_footer_' + spaceId + '_' + templateId + '_' + type);
+        }
     });
 });
 </script>
