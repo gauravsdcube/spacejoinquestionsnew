@@ -116,15 +116,15 @@ $recentApplications = \humhub\modules\space\models\Membership::find()
 
                     <hr>
 
-                    <!-- Email Notifications Setting -->
+                    <!-- Settings -->
                     <div class="membership-option">
                         <div class="option-header">
                             <i class="fa fa-bell"></i>
-                            <h5><?= Yii::t('SpaceJoinQuestionsModule.base', 'Email Notifications') ?></h5>
+                            <h5><?= Yii::t('SpaceJoinQuestionsModule.base', 'General Settings') ?></h5>
                         </div>
-                        <p><?= Yii::t('SpaceJoinQuestionsModule.base', 'Configure email notification settings for membership applications and updates.') ?></p>
+                        <p><?= Yii::t('SpaceJoinQuestionsModule.base', 'Configure email notification and group selection settings for membership applications and updates.') ?></p>
                         <a href="<?= $space->createUrl('/space-join-questions/admin/settings') ?>" class="btn btn-primary">
-                            <?= Yii::t('SpaceJoinQuestionsModule.base', 'Notification Settings') ?>
+                            <?= Yii::t('SpaceJoinQuestionsModule.base', 'Settings') ?>
                         </a>
                     </div>
 
