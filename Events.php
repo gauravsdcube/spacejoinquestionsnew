@@ -88,14 +88,18 @@ class Events
     public static function getSelectedGroupIds(Space $space)
     {
         $settings = $space->getSettings();
-        $selectedGroupIds = $settings->get('questionGroupIds', 'spaceJoinQuestions', []);
+        $selectedGroupIds = $settings->get('questionGroupIds', 'spaceJoinQuestions', '[]');
 
         if (is_string($selectedGroupIds)) {
             $decoded = json_decode($selectedGroupIds, true);
             $selectedGroupIds = is_array($decoded) ? $decoded : [];
+        } elseif (is_array($selectedGroupIds)) {
+            $selectedGroupIds = $selectedGroupIds;
+        } else {
+            $selectedGroupIds = [];
         }
 
-        $selectedGroupIds = array_values(array_filter(array_map('intval', (array)$selectedGroupIds)));
+        $selectedGroupIds = array_values(array_filter(array_map('intval', $selectedGroupIds)));
 
         return $selectedGroupIds;
     }

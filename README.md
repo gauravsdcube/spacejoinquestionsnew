@@ -4,7 +4,7 @@ A production-ready HumHub module that adds a comprehensive space membership appl
 
 **Copyright © 2025 D Cube Consulting Ltd. All rights reserved.**
 
-## 🚀 Version: 2.3.1 (Production Ready)
+## 🚀 Version: 3.0.0 (Production Ready)
 
 ### Overview
 
@@ -441,6 +441,12 @@ php protected/vendor/bin/codecept run --config protected/tests/codeception.yml u
 ```
 
 ## 📝 Changelog
+
+### Version 3.0.0 (Group Selection)
+- ✅ **Added**: Group-based targeting for join questions
+- ✅ **Added**: Settings UI for selecting groups per space
+- ✅ **Changed**: Join questions apply only to selected groups
+- ✅ **Behavior**: If no groups are selected, no questions are shown
 
 ### Version 2.3.1 (Link Rendering Fix)
 - ✅ **Fixed**: Link rendering issues in email templates and previews

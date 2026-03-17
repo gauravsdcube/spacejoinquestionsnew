@@ -24,9 +24,9 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
         ]); ?>
 
         <div class="form-group">
-            <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Email Notifications') ?></h4>
+            <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'General Settings') ?></h4>
             <p class="text-muted">
-                <?= Yii::t('SpaceJoinQuestionsModule.base', 'Configure when space administrators receive email notifications about membership applications.') ?>
+                <?= Yii::t('SpaceJoinQuestionsModule.base', 'Configure email notification and group selection settings for membership applications and updates.') ?>
             </p>
 
             <div class="checkbox">
@@ -53,7 +53,7 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
         <hr>
 
         <div class="form-group">
-            <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Notification Recipients') ?></h4>
+            <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Settings') ?></h4>
             <p class="text-muted">
                 <?= Yii::t('SpaceJoinQuestionsModule.base', 'Manage who receives email notifications when new membership applications are submitted.') ?>
             </p>

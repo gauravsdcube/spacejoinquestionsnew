@@ -433,14 +433,18 @@ class AdminController extends SpaceController
         $space = $this->contentContainer;
         $settings = $space->getSettings();
         $emailNotifications = $settings->get('emailNotifications', 'spaceJoinQuestions', true);
-        $selectedGroupIds = $settings->get('questionGroupIds', 'spaceJoinQuestions', []);
+        $selectedGroupIds = $settings->get('questionGroupIds', 'spaceJoinQuestions', '[]');
 
         if (is_string($selectedGroupIds)) {
             $decoded = json_decode($selectedGroupIds, true);
             $selectedGroupIds = is_array($decoded) ? $decoded : [];
+        } elseif (is_array($selectedGroupIds)) {
+            $selectedGroupIds = $selectedGroupIds;
+        } else {
+            $selectedGroupIds = [];
         }
 
-        $selectedGroupIds = array_values(array_filter(array_map('intval', (array)$selectedGroupIds)));
+        $selectedGroupIds = array_values(array_filter(array_map('intval', $selectedGroupIds)));
 
         $groups = Group::find()
             ->orderBy(['name' => SORT_ASC])
@@ -452,7 +456,7 @@ class AdminController extends SpaceController
             $selectedGroupIds = array_values(array_filter(array_map('intval', $settingsData['questionGroupIds'] ?? [])));
             
             $settings->set('emailNotifications', $emailNotifications, 'spaceJoinQuestions');
-            $settings->set('questionGroupIds', $selectedGroupIds, 'spaceJoinQuestions');
+            $settings->set('questionGroupIds', json_encode($selectedGroupIds), 'spaceJoinQuestions');
             
             Yii::$app->session->setFlash('success', Yii::t('SpaceJoinQuestionsModule.base', 'Settings saved successfully'));
             return $this->redirect($space->createUrl('/space-join-questions/admin/settings'));
