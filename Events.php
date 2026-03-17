@@ -7,6 +7,7 @@ use humhub\modules\space\models\Space;
 use humhub\modules\space\modules\manage\controllers\MemberController;
 use humhub\modules\space\widgets\MembershipButton;
 use humhub\modules\space\widgets\Menu;
+use humhub\modules\user\models\GroupUser;
 use Yii;
 use yii\web\Application as WebApplication;
 
@@ -69,15 +70,65 @@ class Events
             return;
         }
 
-        // Check if space has custom questions
-        $hasQuestions = \humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion::find()
-            ->where(['space_id' => $space->id])
+        $user = Yii::$app->user->isGuest ? null : Yii::$app->user->identity;
+        if (!static::shouldAskQuestionsForUser($space, $user)) {
+            return;
+        }
+
+        // Replace default membership request URL with our custom one
+        $widget->options['requestMembership']['url'] = $space->createUrl('/space-join-questions/membership/request');
+    }
+
+    /**
+     * Get selected group IDs for a space.
+     *
+     * @param Space $space
+     * @return int[]
+     */
+    public static function getSelectedGroupIds(Space $space)
+    {
+        $settings = $space->getSettings();
+        $selectedGroupIds = $settings->get('questionGroupIds', 'spaceJoinQuestions', []);
+
+        if (is_string($selectedGroupIds)) {
+            $decoded = json_decode($selectedGroupIds, true);
+            $selectedGroupIds = is_array($decoded) ? $decoded : [];
+        }
+
+        $selectedGroupIds = array_values(array_filter(array_map('intval', (array)$selectedGroupIds)));
+
+        return $selectedGroupIds;
+    }
+
+    /**
+     * Check if the given user should be asked join questions for this space.
+     *
+     * @param Space $space
+     * @param \humhub\modules\user\models\User|null $user
+     * @return bool
+     */
+    public static function shouldAskQuestionsForUser(Space $space, $user)
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $selectedGroupIds = static::getSelectedGroupIds($space);
+        if (empty($selectedGroupIds)) {
+            return false;
+        }
+
+        $isInSelectedGroup = GroupUser::find()
+            ->where(['user_id' => $user->id, 'group_id' => $selectedGroupIds])
             ->exists();
 
-        if ($hasQuestions) {
-            // Replace default membership request URL with our custom one
-            $widget->options['requestMembership']['url'] = $space->createUrl('/space-join-questions/membership/request');
+        if (!$isInSelectedGroup) {
+            return false;
         }
+
+        return \humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion::find()
+            ->where(['space_id' => $space->id])
+            ->exists();
     }
 
     /**
@@ -104,6 +155,10 @@ class Events
 
         // Allow other types of membership requests
         if ($space->join_policy !== Space::JOIN_POLICY_APPLICATION) {
+            return;
+        }
+
+        if (!static::shouldAskQuestionsForUser($space, $membership->user)) {
             return;
         }
 
