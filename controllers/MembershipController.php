@@ -9,6 +9,7 @@ use humhub\modules\spaceJoinQuestions\permissions\ManageQuestions;
 use humhub\modules\space\models\Membership;
 use humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion;
 use humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer;
+use humhub\modules\spaceJoinQuestions\Events;
 use yii\web\NotFoundHttpException;
 use yii\web\HttpException;
 use yii\filters\AccessControl;
@@ -67,6 +68,10 @@ class MembershipController extends SpaceController
     public function actionRequest()
     {
         $space = $this->contentContainer;
+
+        if (!Events::shouldAskQuestionsForUser($space, Yii::$app->user->identity)) {
+            return $this->redirect($space->createUrl('/space/membership/request-membership-form'));
+        }
         
         // Check if user is already a member
         if ($space->isMember()) {

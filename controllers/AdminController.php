@@ -11,6 +11,8 @@ use humhub\modules\space\controllers\SpaceController;
 use humhub\modules\space\models\Membership;
 use humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion;
 use humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer;
+use humhub\modules\user\models\Group;
+use humhub\modules\user\models\GroupUser;
 
 use humhub\modules\spaceJoinQuestions\models\forms\QuestionForm;
 use humhub\modules\spaceJoinQuestions\permissions\ManageQuestions;
@@ -67,7 +69,15 @@ class AdminController extends SpaceController
             Yii::error('No content container');
         }
 
-        // Check if user is space admin
+        // Allow broader access for settings-related actions
+        if (in_array($action->id, ['settings', 'notification-recipients', 'save-recipients'], true)) {
+            if (!$this->canManageSettings()) {
+                throw new HttpException(403, Yii::t('SpaceJoinQuestionsModule.base', 'Access denied - You do not have permission to manage settings in this space'));
+            }
+            return true;
+        }
+
+        // Check if user is space admin for all other actions
         if (!$this->contentContainer->isAdmin()) {
             throw new HttpException(403, Yii::t('SpaceJoinQuestionsModule.base', 'Access denied - You must be a space administrator'));
         }
@@ -93,6 +103,31 @@ class AdminController extends SpaceController
         }
     }
 
+    /**
+     * Check if current user can manage module settings.
+     *
+     * Allows space admins, system admins, and users in "Administrators"
+     * or "Client Administrators" user groups.
+     */
+    protected function canManageSettings()
+    {
+        if ($this->contentContainer->isAdmin() || Yii::$app->user->isAdmin()) {
+            return true;
+        }
+
+        $groupIds = Group::find()
+            ->select('id')
+            ->where(['name' => ['Administrators', 'Client Administrators']])
+            ->column();
+
+        if (empty($groupIds)) {
+            return false;
+        }
+
+        return GroupUser::find()
+            ->where(['user_id' => Yii::$app->user->id, 'group_id' => $groupIds])
+            ->exists();
+    }
 
 
     /**
@@ -398,12 +433,26 @@ class AdminController extends SpaceController
         $space = $this->contentContainer;
         $settings = $space->getSettings();
         $emailNotifications = $settings->get('emailNotifications', 'spaceJoinQuestions', true);
+        $selectedGroupIds = $settings->get('questionGroupIds', 'spaceJoinQuestions', []);
+
+        if (is_string($selectedGroupIds)) {
+            $decoded = json_decode($selectedGroupIds, true);
+            $selectedGroupIds = is_array($decoded) ? $decoded : [];
+        }
+
+        $selectedGroupIds = array_values(array_filter(array_map('intval', (array)$selectedGroupIds)));
+
+        $groups = Group::find()
+            ->orderBy(['name' => SORT_ASC])
+            ->all();
 
         if (Yii::$app->request->isPost) {
             $settingsData = Yii::$app->request->post('settings', []);
             $emailNotifications = isset($settingsData['emailNotifications']) ? (bool)$settingsData['emailNotifications'] : false;
+            $selectedGroupIds = array_values(array_filter(array_map('intval', $settingsData['questionGroupIds'] ?? [])));
             
             $settings->set('emailNotifications', $emailNotifications, 'spaceJoinQuestions');
+            $settings->set('questionGroupIds', $selectedGroupIds, 'spaceJoinQuestions');
             
             Yii::$app->session->setFlash('success', Yii::t('SpaceJoinQuestionsModule.base', 'Settings saved successfully'));
             return $this->redirect($space->createUrl('/space-join-questions/admin/settings'));
@@ -412,6 +461,8 @@ class AdminController extends SpaceController
         return $this->render('settings', [
             'space' => $space,
             'emailNotifications' => $emailNotifications,
+            'groups' => $groups,
+            'selectedGroupIds' => $selectedGroupIds,
         ]);
     }
 

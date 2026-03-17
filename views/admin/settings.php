@@ -7,6 +7,8 @@ use yii\widgets\ActiveForm;
 /* @var $this yii\web\View */
 /* @var $space humhub\modules\space\models\Space */
 /* @var $emailNotifications boolean */
+/* @var $groups humhub\modules\user\models\Group[] */
+/* @var $selectedGroupIds int[] */
 
 $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
 ?>
@@ -77,6 +79,34 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
                     ->link($space->createUrl('/space-join-questions/admin/notification-recipients'))
                     ->icon('users') ?>
             </div>
+        </div>
+
+        <hr>
+
+        <div class="form-group">
+            <h4><?= Yii::t('SpaceJoinQuestionsModule.base', 'Question Targeting by Group') ?></h4>
+            <p class="text-muted">
+                <?= Yii::t('SpaceJoinQuestionsModule.base', 'Select the user groups that should be required to answer join questions. If none are selected, no one will be asked the questions.') ?>
+            </p>
+
+            <?php if (empty($groups)): ?>
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <?= Yii::t('SpaceJoinQuestionsModule.base', 'No user groups are available to select.') ?>
+                </div>
+            <?php else: ?>
+                <?php foreach ($groups as $group): ?>
+                    <div class="checkbox">
+                        <label>
+                            <?= Html::checkbox('settings[questionGroupIds][]', in_array($group->id, $selectedGroupIds, true), [
+                                'value' => $group->id,
+                                'id' => 'question-group-' . $group->id,
+                            ]) ?>
+                            <?= Html::encode($group->name) ?>
+                        </label>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
 
 
