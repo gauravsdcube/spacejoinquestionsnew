@@ -257,18 +257,20 @@ class EmailTemplate extends ActiveRecord
         if (preg_match('/^#+\s+/m', $content) || preg_match('/\*\*.*\*\*/', $content) || 
             preg_match('/!\[.*\]\(file-guid:/', $content) || preg_match('/\[.*\]\(.*\)/', $content)) {
             // This is rich text content with markdown formatting, convert it
-            return $this->convertRichTextToHtml($content, null, $isPreview);
+            return $this->convertRichTextToHtml($content, null, $isPreview, false);
         }
 
         // Check if content contains HTML tags (but not markdown)
         if (strpos($content, '<') !== false && strpos($content, '>') !== false) {
             // This is HTML content, process any plain URLs in it
-            return $this->processPlainUrls($content);
+            $htmlContent = $this->processPlainUrls($content);
+            return $this->removeColorStyles($htmlContent, false);
         }
 
         // Otherwise, treat as plain text and convert to HTML, then process URLs
         $htmlContent = nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8'));
-        return $this->processPlainUrls($htmlContent);
+        $htmlContent = $this->processPlainUrls($htmlContent);
+        return $this->removeColorStyles($htmlContent, false);
     }
 
     /**
@@ -376,7 +378,7 @@ class EmailTemplate extends ActiveRecord
      * @param bool $isPreview Whether this is for preview (true) or actual email (false)
      * @return string
      */
-    protected function convertRichTextToHtml($content, $recipient = null, $isPreview = false)
+    protected function convertRichTextToHtml($content, $recipient = null, $isPreview = false, bool $forceLinkColor = true)
     {
         // Use email-specific converter for proper link handling and token generation
         $result = \humhub\modules\content\widgets\richtext\converter\RichTextToEmailHtmlConverter::process($content, [
@@ -389,7 +391,7 @@ class EmailTemplate extends ActiveRecord
         $result = $this->processPlainUrls($result);
         
         // Remove color styles from the converted HTML to allow email template colors to take precedence
-        return $this->removeColorStyles($result);
+        return $this->removeColorStyles($result, $forceLinkColor);
     }
     
     /**
@@ -426,6 +428,14 @@ class EmailTemplate extends ActiveRecord
             $encodedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
             return '<a href="' . $encodedUrl . '" target="_blank" rel="noopener noreferrer" style="color: #dd0031; text-decoration: underline;">' . $encodedUrl . '</a>';
         }, $html);
+
+        // Handle email addresses (e.g. user@example.com)
+        $emailPattern = '/\b([A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,})\b/i';
+        $html = preg_replace_callback($emailPattern, function($matches) {
+            $email = $matches[1];
+            $encodedEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+            return '<a href="mailto:' . $encodedEmail . '" style="color: #dd0031; text-decoration: underline;">' . $encodedEmail . '</a>';
+        }, $html);
         
         // Restore existing links
         foreach ($existingLinks as $index => $link) {
@@ -441,7 +451,7 @@ class EmailTemplate extends ActiveRecord
      * @param string $html
      * @return string
      */
-    protected function removeColorStyles($html)
+    protected function removeColorStyles($html, bool $forceLinkColor = true)
     {
         // Remove color-related properties while preserving other styles
         $html = preg_replace_callback('/style\s*=\s*["\']([^"\']*)["\']/i', function($matches) {
@@ -464,27 +474,29 @@ class EmailTemplate extends ActiveRecord
             return 'style="' . $styles . '"';
         }, $html);
         
-        // Ensure all links have the red color
-        $html = preg_replace_callback('/<a([^>]*)>/i', function($matches) {
-            $attributes = $matches[1];
-            
-            // Check if style attribute already exists
-            if (preg_match('/style\s*=\s*["\']([^"\']*)["\']/', $attributes, $styleMatches)) {
-                $styles = $styleMatches[1];
-                // Add or update color
-                if (preg_match('/color\s*:\s*[^;]+/', $styles)) {
-                    $styles = preg_replace('/color\s*:\s*[^;]+/', 'color: #dd0031', $styles);
+        if ($forceLinkColor) {
+            // Ensure all links have the red color
+            $html = preg_replace_callback('/<a([^>]*)>/i', function($matches) {
+                $attributes = $matches[1];
+                
+                // Check if style attribute already exists
+                if (preg_match('/style\s*=\s*["\']([^"\']*)["\']/', $attributes, $styleMatches)) {
+                    $styles = $styleMatches[1];
+                    // Add or update color
+                    if (preg_match('/color\s*:\s*[^;]+/', $styles)) {
+                        $styles = preg_replace('/color\s*:\s*[^;]+/', 'color: #dd0031', $styles);
+                    } else {
+                        $styles .= '; color: #dd0031; text-decoration: underline;';
+                    }
+                    $attributes = preg_replace('/style\s*=\s*["\'][^"\']*["\']/', 'style="' . $styles . '"', $attributes);
                 } else {
-                    $styles .= '; color: #dd0031; text-decoration: underline;';
+                    // Add style attribute
+                    $attributes .= ' style="color: #dd0031; text-decoration: underline;"';
                 }
-                $attributes = preg_replace('/style\s*=\s*["\'][^"\']*["\']/', 'style="' . $styles . '"', $attributes);
-            } else {
-                // Add style attribute
-                $attributes .= ' style="color: #dd0031; text-decoration: underline;"';
-            }
-            
-            return '<a' . $attributes . '>';
-        }, $html);
+                
+                return '<a' . $attributes . '>';
+            }, $html);
+        }
         
         return $html;
     }

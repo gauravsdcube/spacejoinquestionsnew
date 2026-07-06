@@ -4,7 +4,7 @@ A production-ready HumHub module that adds a comprehensive space membership appl
 
 **Copyright © 2025 D Cube Consulting Ltd. All rights reserved.**
 
-## 🚀 Version: 3.0.0 (Production Ready)
+## 🚀 Version: 3.0.1 (Production Ready)
 
 ### Overview
 
@@ -441,6 +441,15 @@ php protected/vendor/bin/codecept run --config protected/tests/codeception.yml u
 ```
 
 ## 📝 Changelog
+
+### Version 3.0.1
+
+* ✅ **Changed**: Non-targeted groups now bypass approval and join directly.
+* ✅ **Changed**: Manage Membership badge renders as text count (no raw HTML).
+* ✅ **Changed**: Join request modal uses the new modal API (consistent header/close).
+* ✅ **Changed**: Removed optional free-text message field from join questions modal.
+* ✅ **Fixed**: Join button size stays consistent in space directory.
+* ✅ **Fixed**: Email template linkification now supports plain emails.
 
 ### Version 3.0.0 (Group Selection)
 - ✅ **Added**: Group-based targeting for join questions
