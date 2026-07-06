@@ -6,7 +6,6 @@ use humhub\modules\content\components\ContentContainerActiveRecord;
 use humhub\modules\content\components\ContentContainerModule;
 use humhub\modules\space\models\Space;
 use Yii;
-use yii\helpers\Url;
 
 /**
  * Space Join Questions Module
@@ -15,7 +14,7 @@ use yii\helpers\Url;
  * with proper approval workflow and notifications.
  *
  * @author D Cube Consulting Ltd <info@dcubeconsulting.co.uk>
- * @version 3.0.0
+ * @version 3.0.1
  * @since 1.0.0
  * @copyright 2025 D Cube Consulting Ltd. All rights reserved.
  */
@@ -127,7 +126,8 @@ class Module extends ContentContainerModule
      */
     public function getConfigUrl()
     {
-        return Url::to(['/space-join-questions/admin/global-settings']);
+        // No global (admin) settings available for this module.
+        return null;
     }
 
     /**
@@ -172,7 +172,7 @@ class Module extends ContentContainerModule
      */
     public function getVersion()
     {
-        return '3.0.0';
+        return '3.0.1';
     }
 
     /**

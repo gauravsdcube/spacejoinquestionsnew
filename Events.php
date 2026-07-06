@@ -9,6 +9,7 @@ use humhub\modules\space\widgets\MembershipButton;
 use humhub\modules\space\widgets\Menu;
 use humhub\modules\user\models\GroupUser;
 use Yii;
+use yii\helpers\Json;
 use yii\web\Application as WebApplication;
 
 /**
@@ -41,10 +42,10 @@ class Events
             ])
             ->count();
 
-        // Add Manage Membership menu item with badge if there are pending applications
+        // Add Manage Membership menu item with count when pending applications exist
         $membershipLabel = Yii::t('SpaceJoinQuestionsModule.base', 'Manage Membership');
         if ($pendingApplicationsCount > 0) {
-            $membershipLabel .= '&nbsp;&nbsp;<span class="label label-warning">' . $pendingApplicationsCount . '</span>';
+            $membershipLabel .= ' (' . $pendingApplicationsCount . ')';
         }
 
         $menu->addItem([
@@ -71,12 +72,21 @@ class Events
         }
 
         $user = Yii::$app->user->isGuest ? null : Yii::$app->user->identity;
-        if (!static::shouldAskQuestionsForUser($space, $user)) {
+        if (static::shouldAskQuestionsForUser($space, $user)) {
+            // Replace default membership request URL with our custom one
+            $widget->options['requestMembership']['url'] = $space->createUrl('/space-join-questions/membership/request');
             return;
         }
 
-        // Replace default membership request URL with our custom one
-        $widget->options['requestMembership']['url'] = $space->createUrl('/space-join-questions/membership/request');
+        // For non-targeted groups, bypass approval and join directly.
+        // Use a non-AJAX POST to avoid injecting membershipResult HTML.
+        $widget->options['requestMembership']['url'] = $space->createUrl('/space/membership/request-membership');
+        $widget->options['requestMembership']['attrs'] = array_merge(
+            $widget->options['requestMembership']['attrs'] ?? [],
+            [
+                'data-method' => 'POST',
+            ],
+        );
     }
 
     /**
