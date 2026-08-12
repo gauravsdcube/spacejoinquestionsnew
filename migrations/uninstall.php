@@ -18,7 +18,9 @@ class uninstall extends Migration
         $this->safeDropTable('space_join_email_template');
         $this->safeDropTable('space_join_decline_reason');
         $this->safeDropTable('space_join_answer');
+        $this->safeDropTable('space_join_application');
         $this->safeDropTable('space_join_question');
+        $this->safeDropTable('space_join_notification_recipients');
 
         return true;
     }

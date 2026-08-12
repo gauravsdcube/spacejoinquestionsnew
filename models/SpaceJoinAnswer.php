@@ -11,12 +11,14 @@ use yii\behaviors\TimestampBehavior;
  * SpaceJoinAnswer Model
  *
  * @property integer $id
- * @property integer $membership_id
+ * @property integer|null $membership_id
+ * @property integer|null $application_id
  * @property integer $question_id
  * @property string $answer_text
  * @property integer $created_at
  *
- * @property Membership $membership
+ * @property Membership|null $membership
+ * @property SpaceJoinApplication|null $application
  * @property SpaceJoinQuestion $question
  */
 class SpaceJoinAnswer extends ActiveRecord
@@ -48,10 +50,11 @@ class SpaceJoinAnswer extends ActiveRecord
     public function rules()
     {
         return [
-            [['membership_id', 'question_id', 'answer_text'], 'required'],
-            [['membership_id', 'question_id'], 'integer'],
+            [['question_id', 'answer_text'], 'required'],
+            [['membership_id', 'application_id', 'question_id'], 'integer'],
             [['answer_text'], 'string', 'max' => 2000],
             [['membership_id'], 'exist', 'skipOnError' => true, 'targetClass' => Membership::class, 'targetAttribute' => ['membership_id' => 'id']],
+            [['application_id'], 'exist', 'skipOnError' => true, 'targetClass' => SpaceJoinApplication::class, 'targetAttribute' => ['application_id' => 'id']],
             [['question_id'], 'exist', 'skipOnError' => true, 'targetClass' => SpaceJoinQuestion::class, 'targetAttribute' => ['question_id' => 'id']],
         ];
     }
@@ -64,6 +67,7 @@ class SpaceJoinAnswer extends ActiveRecord
         return [
             'id' => Yii::t('SpaceJoinQuestionsModule.base', 'ID'),
             'membership_id' => Yii::t('SpaceJoinQuestionsModule.base', 'Membership'),
+            'application_id' => Yii::t('SpaceJoinQuestionsModule.base', 'Application'),
             'question_id' => Yii::t('SpaceJoinQuestionsModule.base', 'Question'),
             'answer_text' => Yii::t('SpaceJoinQuestionsModule.base', 'Answer'),
             'created_at' => Yii::t('SpaceJoinQuestionsModule.base', 'Created At'),
@@ -76,6 +80,14 @@ class SpaceJoinAnswer extends ActiveRecord
     public function getMembership()
     {
         return $this->hasOne(Membership::class, ['id' => 'membership_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getApplication()
+    {
+        return $this->hasOne(SpaceJoinApplication::class, ['id' => 'application_id']);
     }
 
     /**

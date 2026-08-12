@@ -10,20 +10,27 @@ use yii\widgets\ActiveForm;
 /* @var $this yii\web\View */
 /* @var $space humhub\modules\space\models\Space */
 /* @var $questions humhub\modules\spaceJoinQuestions\models\SpaceJoinQuestion[] */
+/* @var $formAction string|null */
+/* @var $modalTitle string|null */
+/* @var $submitLabel string|null */
 
 $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Request Membership');
+
+$formAction = $formAction ?? $space->createUrl('/space-join-questions/membership/request');
+$modalTitle = $modalTitle ?? Yii::t('SpaceJoinQuestionsModule.base', 'Request Membership: {spaceName}', [
+    'spaceName' => Html::encode($space->name),
+]);
+$submitLabel = $submitLabel ?? Yii::t('SpaceJoinQuestionsModule.base', 'Submit Application');
 ?>
 
 <?php $form = Modal::beginFormDialog([
-    'title' => Yii::t('SpaceJoinQuestionsModule.base', 'Request Membership: {spaceName}', [
-        'spaceName' => Html::encode($space->name),
-    ]),
+    'title' => $modalTitle,
     'footer' =>
         ModalButton::cancel() . ' ' .
-        Button::primary(Yii::t('SpaceJoinQuestionsModule.base', 'Submit Application'))->submit(),
+        Button::primary($submitLabel)->submit(),
     'form' => [
         'id' => 'membership-request-form',
-        'action' => $space->createUrl('/space-join-questions/membership/request'),
+        'action' => $formAction,
         'enableClientValidation' => true,
         'enableAjaxValidation' => false,
     ],

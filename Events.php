@@ -75,18 +75,32 @@ class Events
         if (static::shouldAskQuestionsForUser($space, $user)) {
             // Replace default membership request URL with our custom one
             $widget->options['requestMembership']['url'] = $space->createUrl('/space-join-questions/membership/request');
-            return;
+        } else {
+            // For non-targeted groups, bypass approval and join directly.
+            // Use a non-AJAX POST to avoid injecting membershipResult HTML.
+            $widget->options['requestMembership']['url'] = $space->createUrl('/space/membership/request-membership');
+            $widget->options['requestMembership']['attrs'] = array_merge(
+                $widget->options['requestMembership']['attrs'] ?? [],
+                [
+                    'data-method' => 'POST',
+                ],
+            );
         }
 
-        // For non-targeted groups, bypass approval and join directly.
-        // Use a non-AJAX POST to avoid injecting membershipResult HTML.
-        $widget->options['requestMembership']['url'] = $space->createUrl('/space/membership/request-membership');
-        $widget->options['requestMembership']['attrs'] = array_merge(
-            $widget->options['requestMembership']['attrs'] ?? [],
-            [
-                'data-method' => 'POST',
-            ],
-        );
+        if (static::shouldRequireQuestionsOnInvite($space, $user)) {
+            // Same modal pattern as Join / requestMembership (href + #globalModal).
+            // Null out default invite-accept action attrs so ArrayHelper::merge does not
+            // keep data-action-click="content.container.relationship" (full-page POST).
+            $widget->options['acceptInvite']['url'] = $space->createUrl('/space-join-questions/membership/accept-invite');
+            $widget->options['acceptInvite']['attrs'] = [
+                'class' => 'btn btn-accent',
+                'data-bs-target' => '#globalModal',
+                'data-action-click' => null,
+                'data-action-url' => null,
+                'data-button-options' => null,
+                'data-ui-loader' => null,
+            ];
+        }
     }
 
     /**
@@ -146,6 +160,23 @@ class Events
     }
 
     /**
+     * Whether invitees must answer questions and wait for approval.
+     *
+     * @param Space $space
+     * @param \humhub\modules\user\models\User|null $user
+     * @return bool
+     */
+    public static function shouldRequireQuestionsOnInvite(Space $space, $user)
+    {
+        $enabled = $space->getSettings()->get('requireQuestionsOnInvite', 'spaceJoinQuestions', false);
+        if (!$enabled || $enabled === '0' || $enabled === 0) {
+            return false;
+        }
+
+        return static::shouldAskQuestionsForUser($space, $user);
+    }
+
+    /**
      * Validate custom questions before membership insertion
      */
     public static function onMembershipBeforeInsert($event)
@@ -193,17 +224,13 @@ class Events
     }
 
     /**
-     * Save custom question answers after membership insertion
+     * After membership insert: handle invite-link auto-join demotion when questions required,
+     * and optional AVID notifications for applicants.
      */
     public static function onMembershipAfterInsert($event)
     {
         /** @var Membership $membership */
         $membership = $event->sender;
-
-        // Only handle membership requests (not invites)
-        if ($membership->status !== Membership::STATUS_APPLICANT) {
-            return;
-        }
 
         if (!Yii::$app instanceof WebApplication) {
             return;
@@ -214,12 +241,18 @@ class Events
             return;
         }
 
-        // Note: Answers are now saved in the controller's actionRequest method
-        // This prevents double-saving of answers
+        // Invite-link / email-invite registration inserts MEMBER directly.
+        // When the setting is on, demote to applicant so they must answer questions.
+        if ($membership->status === Membership::STATUS_MEMBER) {
+            static::demoteInviteMemberToApplicantIfNeeded($membership, $space);
+            return;
+        }
 
-        // Email notification is now sent from the controller after answers are saved
-        // to prevent race condition where answers are not available yet
-        
+        if ($membership->status !== Membership::STATUS_APPLICANT) {
+            return;
+        }
+
+        // Note: Answers are saved in the membership controller.
         // Trigger AVID membership notification if applicable
         if (Yii::$app->getModule('avid-membership-notifications')) {
             \humhub\modules\avidMembershipNotifications\Events::onMembershipApplicationReceived($membership);
@@ -227,19 +260,61 @@ class Events
     }
 
     /**
-     * Clean up answers when membership is deleted
-     * This handles scenarios like:
-     * - User cancels application and resubmits
-     * - User leaves space and rejoins
-     * - Application is declined and user reapplies
+     * Convert invite-created MEMBER row to APPLICANT when questions are required on invite.
+     */
+    protected static function demoteInviteMemberToApplicantIfNeeded(Membership $membership, Space $space)
+    {
+        $user = $membership->user;
+        if (!$user || !static::shouldRequireQuestionsOnInvite($space, $user)) {
+            return;
+        }
+
+        $invite = \humhub\modules\user\models\Invite::find()
+            ->where(['email' => $user->email, 'space_invite_id' => $space->id])
+            ->andWhere(['source' => [
+                \humhub\modules\user\models\Invite::SOURCE_INVITE,
+                \humhub\modules\user\models\Invite::SOURCE_INVITE_BY_LINK,
+            ]])
+            ->one();
+
+        if ($invite === null) {
+            return;
+        }
+
+        $membership->status = Membership::STATUS_APPLICANT;
+        $membership->save(false, ['status']);
+
+        try {
+            Yii::$app->user->setReturnUrl($space->createUrl('/space-join-questions/membership/request'));
+        } catch (\Throwable $e) {
+            // Ignore return URL failures outside web login context.
+        }
+    }
+
+    /**
+     * Keep answers that belong to durable application history; delete only orphans.
      */
     public static function onMembershipBeforeDelete($event)
     {
         /** @var Membership $membership */
         $membership = $event->sender;
 
-        // Clean up any existing answers for this membership
-        \humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer::deleteAll(['membership_id' => $membership->id]);
+        // Preserve answers tied to an application history row.
+        \humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer::updateAll(
+            ['membership_id' => null],
+            [
+                'and',
+                ['membership_id' => $membership->id],
+                ['not', ['application_id' => null]],
+            ]
+        );
+
+        // Remove answers with no application history (e.g. cancelled drafts).
+        \humhub\modules\spaceJoinQuestions\models\SpaceJoinAnswer::deleteAll([
+            'and',
+            ['membership_id' => $membership->id],
+            ['application_id' => null],
+        ]);
     }
 
     /**

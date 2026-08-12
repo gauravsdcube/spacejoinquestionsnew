@@ -7,6 +7,7 @@ use yii\widgets\ActiveForm;
 /* @var $this yii\web\View */
 /* @var $space humhub\modules\space\models\Space */
 /* @var $emailNotifications boolean */
+/* @var $requireQuestionsOnInvite boolean */
 /* @var $groups humhub\modules\user\models\Group[] */
 /* @var $selectedGroupIds int[] */
 
@@ -41,6 +42,20 @@ $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Settings');
 
             <div class="help-block">
                 <?= Yii::t('SpaceJoinQuestionsModule.base', 'When enabled, space administrators will receive an email notification each time someone submits a membership application with custom question answers.') ?>
+            </div>
+
+            <div class="checkbox">
+                <label>
+                    <?= Html::checkbox('settings[requireQuestionsOnInvite]', $requireQuestionsOnInvite, [
+                        'value' => 1,
+                        'id' => 'require-questions-on-invite-checkbox'
+                    ]) ?>
+                    <?= Yii::t('SpaceJoinQuestionsModule.base', 'Require join questions for invitees') ?>
+                </label>
+            </div>
+
+            <div class="help-block">
+                <?= Yii::t('SpaceJoinQuestionsModule.base', 'When enabled, users who join via invite must answer the join questions and wait for approval. When disabled, invitees are admitted automatically.') ?>
             </div>
 
             <div class="alert alert-info">
