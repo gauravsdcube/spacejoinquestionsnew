@@ -10,6 +10,7 @@ use humhub\modules\space\models\Membership;
 /* @var $this yii\web\View */
 /* @var $space humhub\modules\space\models\Space */
 /* @var $dataProvider yii\data\ActiveDataProvider */
+/* @var $historyProvider yii\data\ActiveDataProvider */
 
 $this->title = Yii::t('SpaceJoinQuestionsModule.base', 'Membership Applications');
 
@@ -35,7 +36,11 @@ $recentApplications = \humhub\modules\space\models\Membership::find()
     <div class="panel-heading">
         <?= Html::encode($this->title) ?>
         <div class="pull-right">
-            <small class="text-muted">
+            <?= Button::info(Yii::t('SpaceJoinQuestionsModule.base', 'Export CSV'))
+                ->link($space->createUrl('/space-join-questions/admin/export-applications'))
+                ->icon('download')
+                ->sm() ?>
+            <small class="text-muted" style="margin-left: 10px;">
                 <?= Yii::t('SpaceJoinQuestionsModule.base', 'Total: {count}', ['count' => $totalApplications]) ?>
             </small>
         </div>
@@ -170,6 +175,103 @@ $recentApplications = \humhub\modules\space\models\Membership::find()
             ]); ?>
 
             <?php Pjax::end(); ?>
+        <?php endif; ?>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <?= Yii::t('SpaceJoinQuestionsModule.base', 'Application History') ?>
+        <div class="pull-right">
+            <small class="text-muted">
+                <?= Yii::t('SpaceJoinQuestionsModule.base', 'Decided: {count}', ['count' => $historyProvider->totalCount]) ?>
+            </small>
+        </div>
+        <div class="clearfix"></div>
+    </div>
+    <div class="panel-body">
+        <?php if ($historyProvider->totalCount == 0): ?>
+            <div class="alert alert-info text-center">
+                <i class="fa fa-info-circle"></i>
+                <?= Yii::t('SpaceJoinQuestionsModule.base', 'No decided applications yet.') ?>
+            </div>
+        <?php else: ?>
+            <?= GridView::widget([
+                'dataProvider' => $historyProvider,
+                'layout' => '{items}{pager}',
+                'tableOptions' => ['class' => 'table table-hover'],
+                'columns' => [
+                    [
+                        'label' => Yii::t('SpaceJoinQuestionsModule.base', 'Applicant'),
+                        'format' => 'raw',
+                        'value' => function ($model) {
+                            if (!$model->user) {
+                                return Html::encode(Yii::t('SpaceJoinQuestionsModule.base', 'Unknown user'));
+                            }
+                            $html = '<div class="media">';
+                            $html .= '<div class="media-left">';
+                            $html .= Image::widget([
+                                'user' => $model->user,
+                                'width' => 32,
+                                'showTooltip' => true,
+                                'link' => true,
+                            ]);
+                            $html .= '</div>';
+                            $html .= '<div class="media-body">';
+                            $html .= '<strong>' . Html::encode($model->user->displayName) . '</strong><br>';
+                            $html .= '<small class="text-muted">' . Html::encode($model->user->email) . '</small>';
+                            $html .= '</div></div>';
+                            return $html;
+                        },
+                    ],
+                    [
+                        'label' => Yii::t('SpaceJoinQuestionsModule.base', 'Source'),
+                        'value' => function ($model) {
+                            return $model->getSourceLabel();
+                        },
+                    ],
+                    [
+                        'label' => Yii::t('SpaceJoinQuestionsModule.base', 'Decision'),
+                        'format' => 'raw',
+                        'value' => function ($model) {
+                            $class = $model->status === \humhub\modules\spaceJoinQuestions\models\SpaceJoinApplication::STATUS_APPROVED
+                                ? 'label-success'
+                                : 'label-danger';
+                            return '<span class="label ' . $class . '">' . Html::encode($model->getStatusLabel()) . '</span>';
+                        },
+                    ],
+                    [
+                        'label' => Yii::t('SpaceJoinQuestionsModule.base', 'Submitted'),
+                        'value' => function ($model) {
+                            return $model->submitted_at
+                                ? Yii::$app->formatter->asDatetime($model->submitted_at)
+                                : '';
+                        },
+                    ],
+                    [
+                        'label' => Yii::t('SpaceJoinQuestionsModule.base', 'Decided'),
+                        'format' => 'raw',
+                        'value' => function ($model) {
+                            $date = $model->decided_at ? Yii::$app->formatter->asDatetime($model->decided_at) : '';
+                            $by = $model->decidedBy ? Html::encode($model->decidedBy->displayName) : '';
+                            return $date . ($by ? '<br><small class="text-muted">' . $by . '</small>' : '');
+                        },
+                    ],
+                    [
+                        'class' => 'yii\grid\ActionColumn',
+                        'header' => Yii::t('SpaceJoinQuestionsModule.base', 'Actions'),
+                        'template' => '{view}',
+                        'buttons' => [
+                            'view' => function ($url, $model) use ($space) {
+                                return Button::defaultType(Yii::t('SpaceJoinQuestionsModule.base', 'View'))
+                                    ->link($space->createUrl('/space-join-questions/admin/application-detail', ['applicationId' => $model->id]))
+                                    ->icon('eye')
+                                    ->xs();
+                            },
+                        ],
+                    ],
+                ],
+            ]); ?>
         <?php endif; ?>
     </div>
 </div>

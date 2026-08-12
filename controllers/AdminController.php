@@ -15,6 +15,7 @@ use humhub\modules\user\models\Group;
 use humhub\modules\user\models\GroupUser;
 
 use humhub\modules\spaceJoinQuestions\models\forms\QuestionForm;
+use humhub\modules\spaceJoinQuestions\models\SpaceJoinApplication;
 use humhub\modules\spaceJoinQuestions\permissions\ManageQuestions;
 use humhub\modules\spaceJoinQuestions\permissions\ViewApplications;
 use humhub\modules\spaceJoinQuestions\notifications\ApplicationAccepted;
@@ -259,7 +260,7 @@ class AdminController extends SpaceController
     }
 
     /**
-     * List all membership applications
+     * List pending membership applications and decided history
      */
     public function actionApplications()
     {
@@ -272,35 +273,66 @@ class AdminController extends SpaceController
                 ->orderBy(['created_at' => SORT_DESC]),
         ]);
 
+        $historyProvider = new ActiveDataProvider([
+            'query' => SpaceJoinApplication::find()
+                ->where([
+                    'space_id' => $this->contentContainer->id,
+                    'status' => [SpaceJoinApplication::STATUS_APPROVED, SpaceJoinApplication::STATUS_DECLINED],
+                ])
+                ->with(['user', 'user.profile', 'decidedBy'])
+                ->orderBy(['decided_at' => SORT_DESC]),
+            'pagination' => ['pageSize' => 20],
+        ]);
+
         return $this->render('applications', [
             'dataProvider' => $dataProvider,
+            'historyProvider' => $historyProvider,
             'space' => $this->contentContainer,
         ]);
     }
 
     /**
-     * View application details
+     * View application details (pending membership or history record)
      */
-    public function actionApplicationDetail($membershipId)
+    public function actionApplicationDetail($membershipId = null, $applicationId = null)
     {
         $this->checkPermission(new ViewApplications());
 
-        $membership = Membership::findOne(['id' => $membershipId, 'space_id' => $this->contentContainer->id]);
-        
-        if (!$membership) {
-            throw new HttpException(404, 'Application not found');
+        $applicationHistory = null;
+        $membership = null;
+
+        if ($applicationId) {
+            $applicationHistory = SpaceJoinApplication::findOne([
+                'id' => $applicationId,
+                'space_id' => $this->contentContainer->id,
+            ]);
+            if (!$applicationHistory) {
+                throw new HttpException(404, 'Application not found');
+            }
+            $membership = $applicationHistory->membership;
+            $answers = SpaceJoinAnswer::find()
+                ->where(['application_id' => $applicationHistory->id])
+                ->with(['question'])
+                ->all();
+        } else {
+            $membership = Membership::findOne(['id' => $membershipId, 'space_id' => $this->contentContainer->id]);
+            if (!$membership) {
+                throw new HttpException(404, 'Application not found');
+            }
+            $applicationHistory = SpaceJoinApplication::findPendingByMembership($membership->id);
+            $answers = SpaceJoinAnswer::find()
+                ->where(['membership_id' => $membership->id])
+                ->with(['question'])
+                ->all();
         }
 
-        $answers = SpaceJoinAnswer::find()
-            ->where(['membership_id' => $membershipId])
-            ->with(['question'])
-            ->all();
-
         return $this->render('application-detail', [
-            'application' => $membership,
+            'application' => $membership ?: $applicationHistory,
+            'applicationHistory' => $applicationHistory,
             'answers' => $answers,
             'space' => $this->contentContainer,
-            'isDeclined' => false,
+            'isDeclined' => $applicationHistory && $applicationHistory->status === SpaceJoinApplication::STATUS_DECLINED,
+            'isHistory' => $applicationHistory && $applicationHistory->status !== SpaceJoinApplication::STATUS_PENDING,
         ]);
     }
 
@@ -320,38 +352,39 @@ class AdminController extends SpaceController
         $membership->updated_at = date('Y-m-d H:i:s');
 
         if ($membership->save()) {
-            
+            $history = SpaceJoinApplication::findPendingByMembership($membership->id);
+            if ($history) {
+                $history->markApproved(Yii::$app->user->identity);
+            }
+
             // Send email notification to user
             try {
                 $template = \humhub\modules\spaceJoinQuestions\models\EmailTemplate::findBySpaceAndType(
-                    $this->contentContainer->id, 
+                    $this->contentContainer->id,
                     \humhub\modules\spaceJoinQuestions\models\EmailTemplate::TYPE_APPLICATION_ACCEPTED
                 );
-                
+
                 if ($template && $template->is_active) {
-                    // Use custom template
                     $this->sendCustomAcceptanceEmail($membership, $template);
                 } else {
-                    // Use default notification
                     $notification = new ApplicationAccepted();
                     $notification->source = $membership;
                     $notification->originator = Yii::$app->user->identity;
-                    
+
                     if ($membership->user && $membership->user->id) {
                         $notification->sendDirect($membership->user);
                     }
                 }
             } catch (\Exception $e) {
                 Yii::error('Error sending notification: ' . $e->getMessage());
-                // Don't fail the approval if notification fails
             }
 
             Yii::$app->session->setFlash('success', Yii::t('SpaceJoinQuestionsModule.base', 'Application approved successfully'));
             return $this->redirect($this->contentContainer->createUrl('/space-join-questions/admin/applications'));
-        } else {
-            Yii::$app->session->setFlash('error', Yii::t('SpaceJoinQuestionsModule.base', 'Failed to approve application'));
-            return $this->redirect($this->contentContainer->createUrl('/space-join-questions/admin/applications'));
         }
+
+        Yii::$app->session->setFlash('error', Yii::t('SpaceJoinQuestionsModule.base', 'Failed to approve application'));
+        return $this->redirect($this->contentContainer->createUrl('/space-join-questions/admin/applications'));
     }
 
     /**
@@ -366,64 +399,144 @@ class AdminController extends SpaceController
             throw new HttpException(404, 'Application not found');
         }
 
-        // Get the decline reason from POST data
         $declineReason = trim(Yii::$app->request->post('decline_reason', ''));
 
-        // Validate that decline reason is provided
-        if (empty($declineReason)) {
+        if ($declineReason === '') {
             Yii::$app->session->setFlash('error', Yii::t('SpaceJoinQuestionsModule.base', 'A decline reason is required.'));
             return $this->redirect($this->contentContainer->createUrl('/space-join-questions/admin/application-detail', ['membershipId' => $membershipId]));
         }
 
-        // Store necessary information before deleting the membership
         $user = $membership->user;
         $space = $membership->space;
-        $membershipId = $membership->id;
+        $membershipIdValue = $membership->id;
+        $history = SpaceJoinApplication::findPendingByMembership($membership->id);
 
-        // For declined applications, we delete the membership record
+        if ($history) {
+            // Detach answers before membership delete so history is retained.
+            SpaceJoinAnswer::updateAll(
+                ['membership_id' => null],
+                ['application_id' => $history->id]
+            );
+            $history->markDeclined($declineReason, Yii::$app->user->identity);
+        }
+
         if ($membership->delete()) {
-            // Send email notification to user
             try {
                 $template = \humhub\modules\spaceJoinQuestions\models\EmailTemplate::findBySpaceAndType(
-                    $this->contentContainer->id, 
+                    $this->contentContainer->id,
                     \humhub\modules\spaceJoinQuestions\models\EmailTemplate::TYPE_APPLICATION_DECLINED
                 );
-                
+
                 if ($template && $template->is_active) {
-                    // Use custom template
                     $this->sendCustomDeclineEmail($user, $space, $declineReason, $template);
                 } else {
-                    // Use default notification
                     $notification = new ApplicationDeclined();
-                    
-                    // Create a mock membership object with the necessary information
+
                     $mockMembership = new \stdClass();
-                    $mockMembership->id = $membershipId;
+                    $mockMembership->id = $membershipIdValue;
                     $mockMembership->space = $space;
                     $mockMembership->user = $user;
-                    
+
                     $notification->source = $mockMembership;
                     $notification->originator = Yii::$app->user->identity;
                     $notification->setDeclineReason($declineReason);
-                    
+
                     if ($user && $user->id) {
                         $notification->sendDirect($user);
                     }
                 }
             } catch (\Exception $e) {
                 Yii::error('Error sending decline notification: ' . $e->getMessage());
-                // Don't fail the decline if notification fails
             }
 
             Yii::$app->session->setFlash('success', Yii::t('SpaceJoinQuestionsModule.base', 'Application declined successfully'));
             return $this->redirect($this->contentContainer->createUrl('/space-join-questions/admin/applications'));
-        } else {
-            Yii::$app->session->setFlash('error', Yii::t('SpaceJoinQuestionsModule.base', 'Failed to decline application'));
-            return $this->redirect($this->contentContainer->createUrl('/space-join-questions/admin/applications'));
         }
+
+        Yii::$app->session->setFlash('error', Yii::t('SpaceJoinQuestionsModule.base', 'Failed to decline application'));
+        return $this->redirect($this->contentContainer->createUrl('/space-join-questions/admin/applications'));
     }
 
+    /**
+     * Export all applications (pending, approved, declined) as CSV
+     */
+    public function actionExportApplications()
+    {
+        $this->checkPermission(new ViewApplications());
 
+        $space = $this->contentContainer;
+        $questions = SpaceJoinQuestion::find()
+            ->where(['space_id' => $space->id])
+            ->orderBy(['sort_order' => SORT_ASC])
+            ->all();
+
+        $applications = SpaceJoinApplication::find()
+            ->where(['space_id' => $space->id])
+            ->with(['user', 'decidedBy', 'answers'])
+            ->orderBy([
+                'submitted_at' => SORT_DESC,
+                'id' => SORT_DESC,
+            ])
+            ->all();
+
+        $filename = 'space-' . $space->id . '-applications-' . date('Ymd-His') . '.csv';
+
+        Yii::$app->response->format = Response::FORMAT_RAW;
+        Yii::$app->response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        Yii::$app->response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+        $out = fopen('php://temp', 'r+');
+        fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM for Excel
+
+        $header = [
+            'Application ID',
+            'User',
+            'Email',
+            'Source',
+            'Status',
+            'Submitted At',
+            'Decided At',
+            'Decided By',
+            'Decline Reason',
+            'Request Message',
+        ];
+        foreach ($questions as $question) {
+            $header[] = $question->question_text;
+        }
+        fputcsv($out, $header);
+
+        foreach ($applications as $application) {
+            $answersByQuestion = [];
+            foreach ($application->answers as $answer) {
+                $answersByQuestion[(int) $answer->question_id] = $answer->answer_text;
+            }
+
+            $row = [
+                $application->id,
+                $application->user ? $application->user->displayName : '',
+                $application->user ? $application->user->email : '',
+                $application->getSourceLabel(),
+                $application->getStatusLabel(),
+                $application->submitted_at ? Yii::$app->formatter->asDatetime($application->submitted_at) : '',
+                $application->decided_at ? Yii::$app->formatter->asDatetime($application->decided_at) : '',
+                $application->decidedBy ? $application->decidedBy->displayName : '',
+                (string) $application->decline_reason,
+                (string) $application->request_message,
+            ];
+
+            foreach ($questions as $question) {
+                $row[] = $answersByQuestion[(int) $question->id] ?? '';
+            }
+
+            fputcsv($out, $row);
+        }
+
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
+
+        return $csv;
+    }
 
     /**
      * Module settings
@@ -433,6 +546,7 @@ class AdminController extends SpaceController
         $space = $this->contentContainer;
         $settings = $space->getSettings();
         $emailNotifications = $settings->get('emailNotifications', 'spaceJoinQuestions', true);
+        $requireQuestionsOnInvite = (bool) $settings->get('requireQuestionsOnInvite', 'spaceJoinQuestions', false);
         $selectedGroupIds = $settings->get('questionGroupIds', 'spaceJoinQuestions', '[]');
 
         if (is_string($selectedGroupIds)) {
@@ -452,12 +566,14 @@ class AdminController extends SpaceController
 
         if (Yii::$app->request->isPost) {
             $settingsData = Yii::$app->request->post('settings', []);
-            $emailNotifications = isset($settingsData['emailNotifications']) ? (bool)$settingsData['emailNotifications'] : false;
+            $emailNotifications = isset($settingsData['emailNotifications']) ? (bool) $settingsData['emailNotifications'] : false;
+            $requireQuestionsOnInvite = isset($settingsData['requireQuestionsOnInvite']) ? (bool) $settingsData['requireQuestionsOnInvite'] : false;
             $selectedGroupIds = array_values(array_filter(array_map('intval', $settingsData['questionGroupIds'] ?? [])));
-            
+
             $settings->set('emailNotifications', $emailNotifications, 'spaceJoinQuestions');
+            $settings->set('requireQuestionsOnInvite', $requireQuestionsOnInvite, 'spaceJoinQuestions');
             $settings->set('questionGroupIds', json_encode($selectedGroupIds), 'spaceJoinQuestions');
-            
+
             Yii::$app->session->setFlash('success', Yii::t('SpaceJoinQuestionsModule.base', 'Settings saved successfully'));
             return $this->redirect($space->createUrl('/space-join-questions/admin/settings'));
         }
@@ -465,6 +581,7 @@ class AdminController extends SpaceController
         return $this->render('settings', [
             'space' => $space,
             'emailNotifications' => $emailNotifications,
+            'requireQuestionsOnInvite' => $requireQuestionsOnInvite,
             'groups' => $groups,
             'selectedGroupIds' => $selectedGroupIds,
         ]);
